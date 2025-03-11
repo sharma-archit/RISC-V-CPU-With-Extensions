@@ -1,11 +1,13 @@
-module cpuCore #(parameter XLEN = 32,
-                 parameter ALU_SEL_SIZE = 4,
-                 parameter SHIFT_SIZE = 5,
-                 parameter FUNCT3_SIZE = 3,
-                 parameter JALR_OFFSET_SIZE = 12,
-                 parameter JAL_OFFSET_SIZE = 20,
-                 parameter LOAD_OFFSET = 12,
-                 parameter REGISTER_SIZE = 5) (
+module cpuCore #(
+    parameter XLEN = 32,
+    parameter ALU_SEL_SIZE = 4,
+    parameter SHIFT_SIZE = 5,
+    parameter FUNCT3_SIZE = 3,
+    parameter JALR_OFFSET_SIZE = 12,
+    parameter JAL_OFFSET_SIZE = 20,
+    parameter LOAD_OFFSET = 12,
+    parameter REGISTER_SIZE = 5)
+(
     input clk,
     input rst,
     // debug ports to write instruction memory for testing

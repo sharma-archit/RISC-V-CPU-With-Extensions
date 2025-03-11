@@ -1,4 +1,6 @@
-module cpuCore_tb #( parameter XLEN = 32)();
+module cpuCore_tb #(
+    parameter XLEN = 32)
+();
 
 logic clk = 0;
 logic rst;
