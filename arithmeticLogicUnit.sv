@@ -1,7 +1,7 @@
 module arithmeticLogicUnit #(
     parameter SEL_SIZE = 4,
     parameter SHIFT_SIZE = 5,
-    parameter XLEN = 32)
+    parameter XLEN = 64)
 (
     input  enable,
     input  [SEL_SIZE - 1:0]  sel,

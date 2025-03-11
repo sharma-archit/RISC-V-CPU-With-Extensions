@@ -155,7 +155,7 @@ always_comb begin : decoder
             alu_enable = 1; // use ALU to compute current PC + 8
             alu_sel = ADD;
             alu_data_in_a = PC_in;
-            alu_data_in_b = 8;
+            alu_data_in_b = 4;
 
             jbl_operation = JBL_JAL;
             jbl_jal_offset = {instruction[31], instruction[19:12], instruction[20], instruction[30:21]}; // Reordering jal offset from instruction
@@ -163,7 +163,7 @@ always_comb begin : decoder
 
             rf_write_enable = 1;
             rf_write_addr = instruction[DESTINATION_REGISTER_LOC - 1:DESTINATION_REGISTER_LOC - REGISTER_SIZE];
-            rf_write_data_sel = ALU; //current PC + 8;
+            rf_write_data_sel = ALU; //current PC + 4;
 
             destination_reg = instruction[DESTINATION_REGISTER_LOC - 1:DESTINATION_REGISTER_LOC - REGISTER_SIZE];
             source_reg1 = 'x;
@@ -176,7 +176,7 @@ always_comb begin : decoder
             alu_enable = 1;
             alu_sel = ADD;
             alu_data_in_a = PC_in;
-            alu_data_in_b = 8;
+            alu_data_in_b = 4;
             
             jbl_operation = JBL_JALR;
             jbl_offset = instruction[INSTRUCTION_LENGTH - 1:INSTRUCTION_LENGTH - JALR_OFFSET_SIZE];
@@ -187,7 +187,7 @@ always_comb begin : decoder
             rf_read_addr1 = instruction[SOURCE_REGISTER1_LOC - 1:SOURCE_REGISTER1_LOC - REGISTER_SIZE];
             rf_write_enable = 1;
             rf_write_addr = instruction[DESTINATION_REGISTER_LOC - 1:DESTINATION_REGISTER_LOC - REGISTER_SIZE];
-            rf_write_data_sel = ALU; //current PC + 8
+            rf_write_data_sel = ALU; //current PC + 4
 
             destination_reg = instruction[DESTINATION_REGISTER_LOC - 1:DESTINATION_REGISTER_LOC - REGISTER_SIZE];
             source_reg1 = instruction[SOURCE_REGISTER1_LOC - 1: SOURCE_REGISTER1_LOC - REGISTER_SIZE];
@@ -286,7 +286,7 @@ always_comb begin : decoder
                 alu_enable = 1;
                 alu_sel = ADD;
 
-                alu_data_in_a = {{(INSTRUCTION_LENGTH - 12){instruction[INSTRUCTION_LENGTH-1]}}, instruction[INSTRUCTION_LENGTH:25], instruction[11:7]}; // target address offset 
+                alu_data_in_a = {{(XLEN - 12){instruction[INSTRUCTION_LENGTH-1]}}, instruction[INSTRUCTION_LENGTH - 1:25], instruction[11:7]}; // target address offset 
                 alu_data_in_b = rf_read_data1; // target base address
 
                 rf_read_enable1 = 1;
@@ -409,14 +409,14 @@ always_comb begin : decoder
             source_reg1 = instruction[SOURCE_REGISTER1_LOC - 1: SOURCE_REGISTER1_LOC - REGISTER_SIZE];
             source_reg2 = instruction[SOURCE_REGISTER2_LOC - 1: SOURCE_REGISTER2_LOC - REGISTER_SIZE];
             
-            if (instruction[FUNCT3 - 1:FUNCT3 - FUNCT3_SIZE] == 3'b000 && instruction[XLEN - 1:XLEN - 7] == 7'b0000000) begin //ADD
+            if (instruction[FUNCT3 - 1:FUNCT3 - FUNCT3_SIZE] == 3'b000 && instruction[INSTRUCTION_LENGTH - 1:INSTRUCTION_LENGTH - 7] == 7'b0000000) begin //ADD
 
                 alu_sel = ADD;
                 alu_data_in_a = rf_read_data1;
                 alu_data_in_b = rf_read_data2;
 
             end
-            if (instruction[FUNCT3 - 1:FUNCT3 - FUNCT3_SIZE] == 3'b000 && instruction[XLEN - 1:XLEN - 7] == 7'b0100000) begin //SUB
+            if (instruction[FUNCT3 - 1:FUNCT3 - FUNCT3_SIZE] == 3'b000 && instruction[INSTRUCTION_LENGTH - 1:INSTRUCTION_LENGTH - 7] == 7'b0100000) begin //SUB
 
                 alu_sel = SUB;
                 alu_data_in_a = rf_read_data1;
@@ -451,14 +451,14 @@ always_comb begin : decoder
                 alu_data_in_b = rf_read_data2;
 
             end
-            if (instruction[FUNCT3 - 1:FUNCT3 - FUNCT3_SIZE] == 3'b101 && instruction[XLEN - 1:XLEN - 7] == 7'b0000000) begin //SRL
+            if (instruction[FUNCT3 - 1:FUNCT3 - FUNCT3_SIZE] == 3'b101 && instruction[INSTRUCTION_LENGTH - 1:INSTRUCTION_LENGTH - 7] == 7'b0000000) begin //SRL
 
                 alu_sel = SRL;
                 alu_shift_amt = rf_read_data2[4:0];
                 alu_data_in_a = rf_read_data1;
 
             end
-            if (instruction[FUNCT3 - 1:FUNCT3 - FUNCT3_SIZE] == 3'b101 && instruction[XLEN - 1:XLEN - 7] == 7'b0100000) begin //SRA
+            if (instruction[FUNCT3 - 1:FUNCT3 - FUNCT3_SIZE] == 3'b101 && instruction[INSTRUCTION_LENGTH - 1:INSTRUCTION_LENGTH - 7] == 7'b0100000) begin //SRA
 
                 alu_sel = SRA;
                 alu_shift_amt = rf_read_data2[4:0];
@@ -506,7 +506,7 @@ always_comb begin : decoder
         
         ECB: begin //Not required in current implementation, only useful when running an OS
 
-            if(instruction[XLEN - 1:XLEN - FUNCT12] == 12'b000000000000) begin //ECALL: System call
+            if(instruction[INSTRUCTION_LENGTH - 1:INSTRUCTION_LENGTH - FUNCT12] == 12'b000000000000) begin //ECALL: System call
 
                 // NOP since instruction is not implemented
                 alu_enable = 1;
@@ -528,7 +528,7 @@ always_comb begin : decoder
 
             end
 
-            if(instruction[XLEN - 1:XLEN - FUNCT12] == 12'b000000000001) begin //EBREAK: Debugging breakpoint
+            if(instruction[INSTRUCTION_LENGTH - 1:INSTRUCTION_LENGTH - FUNCT12] == 12'b000000000001) begin //EBREAK: Debugging breakpoint
 
                 // NOP since instruction is not implemented
                 alu_enable = 1;

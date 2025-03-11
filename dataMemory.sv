@@ -1,5 +1,5 @@
 module dataMemory #(
-    parameter XLEN = 32
+    parameter XLEN = 64
     parameter BYTE_SIZE = 8
     parameter MEM_STEPS = XLEN/BYTE_SIZE)
 (
@@ -23,7 +23,7 @@ always_comb begin
 
         memory_read_addr = MEM_STEPS * read_addr - MEM_STEPS;
     
-        for (int i = 0; i < (MEM_STEPS) ; i++) begin // Transfer 8 bit data sets in 4 steps, totalling 32 bits
+        for (int i = 0; i < (MEM_STEPS) ; i++) begin // Transfer 8 bit data sets in 8 steps, totalling 64 bits
 
             read_data[i] = data_memory[memory_read_addr + i];
 
@@ -35,7 +35,7 @@ always_comb begin
 
         memory_write_addr = MEM_STEPS * write_addr - MEM_STEPS;
 
-        for (int i = 0; i < (MEM_STEPS) ; i++) begin // Transfer 8 bit data sets in 4 steps, totalling 32 bits
+        for (int i = 0; i < (MEM_STEPS) ; i++) begin // Transfer 8 bit data sets in 8 steps, totalling 64 bits
 
             data_memory[memory_write_addr + i] = write_data[i];
 

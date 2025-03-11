@@ -1,7 +1,8 @@
 module memoryAccessCycle #(
-    parameter XLEN = 32,
+    parameter XLEN = 64,
     parameter BYTE = 8,
-    parameter HALFWORD = 16)
+    parameter HALFWORD = 16
+    parameter WORD = 32)
 (
     input  dm_read_enable,
     input  dm_write_enable,
@@ -40,15 +41,17 @@ always_comb begin
         // size memory read data for load operations
         case (dm_load_type)
 
-            LOAD_B : dm_read_data = { {(XLEN - BYTE){read_data[BYTE - 1]}}, read_data[BYTE - 1:0]};
+            LOAD_B : dm_read_data = {{(XLEN - BYTE){read_data[BYTE - 1]}}, read_data[BYTE - 1:0]};
 
-            LOAD_H : dm_read_data = { {(XLEN - HALFWORD){read_data[HALFWORD - 1]}}, read_data[HALFWORD - 1:0]};
+            LOAD_H : dm_read_data = {{(XLEN - HALFWORD){read_data[HALFWORD - 1]}}, read_data[HALFWORD - 1:0]};
 
-            LOAD_W : dm_read_data = read_data;
+            LOAD_W : dm_read_data = {{(XLEN - WORD){read_data[WORD - 1]}}, read_data[WORD - 1:0]};
 
-            LOAD_BU : dm_read_data = { {(XLEN - BYTE){1'b0}}, read_data[BYTE - 1:0]};
+            LOAD_BU : dm_read_data = {{(XLEN - BYTE){1'b0}}, read_data[BYTE - 1:0]};
 
             LOAD_HU : dm_read_data = {{(XLEN - HALFWORD){1'b0}}, read_data[HALFWORD - 1:0]};
+
+            LOAD_WU : dm_read_data = {{(XLEN - WORD){1'b0}}, read_data[WORD - 1:0]};
 
             default : dm_read_data = '0;
 

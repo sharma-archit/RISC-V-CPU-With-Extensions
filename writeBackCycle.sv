@@ -1,5 +1,5 @@
 module writeBackCycle #(
-    parameter XLEN=32)
+    parameter XLEN=64)
 (
     input [1:0] writeback_data_sel,
     output logic[XLEN-1:0] writeback_data,

@@ -31,7 +31,7 @@ always_ff @(posedge clk) begin
     
 end
 
-assign PC_out = count_start ? PC_in + 8 : '0;
+assign PC_out = count_start ? PC_in + 4 : '0;
 
 
 instructionMemory instruction_memory (

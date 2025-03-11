@@ -1,11 +1,12 @@
 module hazardMitigation #(
-    parameter XLEN = 32,
+    parameter XLEN = 64,
     parameter REGISTER_SIZE = 5,
-    parameter SHIFT_DEPTH = 3) // current and previous two instructions
+    parameter SHIFT_DEPTH = 3,  // current and previous two instructions
+    parameter INSTRUCTION_LENGTH = XLEN/2)
 (
     input clk,
     input rst,
-    input [XLEN - 1:0] instruction,
+    input [INSTRUCTION_LENGTH - 1:0] instruction,
     input [REGISTER_SIZE-1:0] destination_reg,
     input [REGISTER_SIZE-1:0] source_reg1,
     input [REGISTER_SIZE-1:0] source_reg2,
