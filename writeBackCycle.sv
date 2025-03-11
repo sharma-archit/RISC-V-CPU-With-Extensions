@@ -1,6 +1,6 @@
 module writeBackCycle #(
-    parameter XLEN=32
-) (
+    parameter XLEN=32)
+(
     input [1:0] writeback_data_sel,
     output logic[XLEN-1:0] writeback_data,
     input [XLEN-1:0] alu_data_out,

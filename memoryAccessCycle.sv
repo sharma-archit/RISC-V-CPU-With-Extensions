@@ -1,8 +1,8 @@
 module memoryAccessCycle #(
     parameter XLEN = 32,
     parameter BYTE = 8,
-    parameter HALFWORD = 16
-) (
+    parameter HALFWORD = 16)
+(
     input  dm_read_enable,
     input  dm_write_enable,
     input [XLEN-1:0] alu_data_out,

@@ -1,5 +1,5 @@
 module decodeCycle #(
-    parameter XLEN = 32,
+    parameter XLEN = 64,
     parameter ALU_SEL_SIZE = 4,
     parameter SHIFT_SIZE = 5,
     parameter FUNCT3_SIZE = 3,
@@ -7,11 +7,12 @@ module decodeCycle #(
     parameter JAL_OFFSET_SIZE = 20,
     parameter LOAD_OFFSET = 12,
     parameter REGISTER_SIZE = 5
-   ) 
-(   input clk, 
+    parameter INSTRUCTION_LENGTH = XLEN/2)
+(   
+    input clk, 
     input rst, 
     
-    input logic [XLEN - 1:0] instruction,
+    input logic [INSTRUCTION_LENGTH - 1:0] instruction,
     input logic [XLEN - 1:0] PC_in,
     output logic [XLEN - 1:0] PC_out,
 

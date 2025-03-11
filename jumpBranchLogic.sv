@@ -1,7 +1,8 @@
-module jumpBranchLogic #(parameter OFFSET_SIZE = 12,
-                         parameter JAL_OFFSET_SIZE = 20,
-                         parameter OPERATION_SIZE = 3,
-                         parameter XLEN = 32)
+module jumpBranchLogic #(
+    parameter OFFSET_SIZE = 12,
+    parameter JAL_OFFSET_SIZE = 20,
+    parameter OPERATION_SIZE = 3,
+    parameter XLEN = 32)
 (
     input [OPERATION_SIZE - 1:0]  operation,
     input signed [OFFSET_SIZE - 1:0] offset,

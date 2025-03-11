@@ -1,5 +1,6 @@
-module regFile #(parameter ADDR_SIZE = 5,
-                  parameter XLEN = 32)
+module regFile #(
+    parameter ADDR_SIZE = 5,
+    parameter XLEN = 64)
 (
     input clk,
     input rst,
