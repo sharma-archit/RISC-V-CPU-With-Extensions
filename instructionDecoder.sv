@@ -62,18 +62,22 @@ module instructionDecoder #(
 
 // 7-bit opcodes //
 // stand-alone instructions
-const logic [6:0] LUI    = 7'b0110111;
-const logic [6:0] AUIPC  = 7'b0010111;
-const logic [6:0] JAL    = 7'b1101111;
-const logic [6:0] JALR   = 7'b1100111;
+const logic [6:0] LUI     = 7'b0110111;
+const logic [6:0] AUIPC   = 7'b0010111;
+const logic [6:0] JAL     = 7'b1101111;
+const logic [6:0] JALR    = 7'b1100111;
 // instruction groups
-const logic [6:0] BRANCH = 7'b1100011;
-const logic [6:0] LOAD   =  7'b0000011;
-const logic [6:0] STORE  = 7'b0100011;
-const logic [6:0] IRII   = 7'b0010011;
-const logic [6:0] IRRO   = 7'b0110011;
-const logic [6:0] FENCE  = 7'b0001111;
-const logic [6:0] ECB    = 7'b1110011;
+const logic [6:0] BRANCH  = 7'b1100011;
+const logic [6:0] LOAD    =  7'b0000011;
+const logic [6:0] STORE   = 7'b0100011;
+const logic [6:0] IRII    = 7'b0010011;
+const logic [6:0] IRRO    = 7'b0110011;
+const logic [6:0] FENCE   = 7'b0001111;
+const logic [6:0] ECB     = 7'b1110011;
+const logic [6:0] IRII64  = 7'b0011011;
+const logic [6:0] IRRO64  = 7'b0111011;
+const logic [6:0] LOAD64  = 7'b0000011;
+const logic [6:0] STORE64 = 7'b0100011;
 
 enum {ADD, SUB, SLT, SLTU, ANDI, ORI, XORI, SLL, SRL, SRA, ALU_LUI, ALU_AUIPC} ALU_OP_E; //ANDI, ORI, and XORI are used to avoid using SystemVerilog keywords
 enum {JBL_JAL, JBL_JALR, BEQ, BNE, BLT, BGE, BLTU, BGEU} JBL_OP_E;
@@ -370,20 +374,20 @@ always_comb begin : decoder
                 alu_data_in_b = {{(XLEN - IRII_IMMEDIATE){instruction[INSTRUCTION_LENGTH - 1]}}, instruction[INSTRUCTION_LENGTH - 1:INSTRUCTION_LENGTH - IRII_IMMEDIATE]}; //Sign extended immediate value
 
             end
-            if (instruction[FUNCT3 - 1:FUNCT3 - FUNCT3_SIZE] == 3'b001 & instruction[XLEN - 1:XLEN - 7] == 7'b0000000) begin //SLLI
+            if (instruction[FUNCT3 - 1:FUNCT3 - FUNCT3_SIZE] == 3'b001 & instruction[XLEN - 1:XLEN - 6] == 7'b000000) begin //SLLI
 
                 alu_sel = SLL;
                 alu_shift_amt = instruction[INSTRUCTION_LENGTH - IRII_IMMEDIATE + SHIFT_SIZE - 1:INSTRUCTION_LENGTH - IRII_IMMEDIATE]; //Shift amount is lower 5 bits of immediate value
                 alu_data_in_a = rf_read_data1;
             end
-            if (instruction[FUNCT3 - 1:FUNCT3 - FUNCT3_SIZE] == 3'b101 & instruction[XLEN - 1:XLEN - 7] == 7'b0000000) begin //SRLI
+            if (instruction[FUNCT3 - 1:FUNCT3 - FUNCT3_SIZE] == 3'b101 & instruction[XLEN - 1:XLEN - 6] == 7'b000000) begin //SRLI
 
                 alu_sel = SRL;
                 alu_shift_amt = instruction[INSTRUCTION_LENGTH - IRII_IMMEDIATE + SHIFT_SIZE - 1:INSTRUCTION_LENGTH - IRII_IMMEDIATE];
                 alu_data_in_a = rf_read_data1;
 
             end
-            if (instruction[FUNCT3 - 1:FUNCT3 - FUNCT3_SIZE] == 3'b101 & instruction[XLEN - 1:XLEN - 7] == 7'b0100000) begin //SRAI
+            if (instruction[FUNCT3 - 1:FUNCT3 - FUNCT3_SIZE] == 3'b101 & instruction[XLEN - 1:XLEN - 6] == 7'b010000) begin //SRAI
 
                 alu_sel = SRA;
                 alu_shift_amt = instruction[INSTRUCTION_LENGTH - IRII_IMMEDIATE + SHIFT_SIZE - 1:INSTRUCTION_LENGTH - IRII_IMMEDIATE];
@@ -547,6 +551,51 @@ always_comb begin : decoder
                 alu_sel = ADD;
                 alu_data_in_a = rf_read_data1;
                 alu_data_in_b = 0;
+
+            end
+
+        end
+
+        IRII64: begin
+
+            alu_enable = 1;
+
+            rf_read_enable1 = 1;
+            rf_read_addr1 = instruction[SOURCE_REGISTER1_LOC - 1:SOURCE_REGISTER1_LOC - REGISTER_SIZE];
+
+            rf_write_enable = 1;
+            rf_write_addr = instruction[DESTINATION_REGISTER_LOC - 1:DESTINATION_REGISTER_LOC - REGISTER_SIZE];
+            rf_write_data_sel = ALU;
+
+            destination_reg = instruction[DESTINATION_REGISTER_LOC - 1:DESTINATION_REGISTER_LOC - REGISTER_SIZE];
+            source_reg1 = instruction[SOURCE_REGISTER1_LOC - 1: SOURCE_REGISTER1_LOC - REGISTER_SIZE];
+            source_reg2 = 'x;
+
+            if (instruction[FUNCT3 - 1:FUNCT3 - FUNCT3_SIZE] == 3'b000) begin //ADDIW
+
+                alu_sel = ADDW;
+                alu_data_in_a = rf_read_data1;
+                alu_data_in_b = {{(XLEN - IRII_IMMEDIATE){instruction[INSTRUCTION_LENGTH - 1]}}, instruction[INSTRUCTION_LENGTH - 1:INSTRUCTION_LENGTH - IRII_IMMEDIATE]}; //Sign extended immediate value
+
+            end
+            if (instruction[FUNCT3 - 1:FUNCT3 - FUNCT3_SIZE] == 3'b001 & instruction[XLEN - 1:XLEN - 6] == 7'b000000) begin //SLLI
+
+                alu_sel = SLL;
+                alu_shift_amt = instruction[INSTRUCTION_LENGTH - IRII_IMMEDIATE + SHIFT_SIZE - 1:INSTRUCTION_LENGTH - IRII_IMMEDIATE]; //Shift amount is lower 5 bits of immediate value
+                alu_data_in_a = rf_read_data1;
+            end
+            if (instruction[FUNCT3 - 1:FUNCT3 - FUNCT3_SIZE] == 3'b101 & instruction[XLEN - 1:XLEN - 6] == 7'b000000) begin //SRLI
+
+                alu_sel = SRL;
+                alu_shift_amt = instruction[INSTRUCTION_LENGTH - IRII_IMMEDIATE + SHIFT_SIZE - 1:INSTRUCTION_LENGTH - IRII_IMMEDIATE];
+                alu_data_in_a = rf_read_data1;
+
+            end
+            if (instruction[FUNCT3 - 1:FUNCT3 - FUNCT3_SIZE] == 3'b101 & instruction[XLEN - 1:XLEN - 6] == 7'b010000) begin //SRAI
+
+                alu_sel = SRA;
+                alu_shift_amt = instruction[INSTRUCTION_LENGTH - IRII_IMMEDIATE + SHIFT_SIZE - 1:INSTRUCTION_LENGTH - IRII_IMMEDIATE];
+                alu_data_in_a = rf_read_data1;
 
             end
 
