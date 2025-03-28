@@ -1,7 +1,7 @@
 module cpuCore #(
     parameter XLEN = 32,
     parameter ALU_SEL_SIZE = 4,
-    parameter SHIFT_SIZE = 5,
+    parameter SHIFT_SIZE = 6,
     parameter FUNCT3_SIZE = 3,
     parameter JALR_OFFSET_SIZE = 12,
     parameter JAL_OFFSET_SIZE = 20,
@@ -270,28 +270,6 @@ memoryAccessCycle memory_access_cycle (
     .dm_read_data(dm_read_data),
     .dm_data_bypass(dm_data_bypass)
 );
-
-// Memory Access -> Writeback Flop
-// always_ff @(posedge(clk)) begin : memaccess_to_writeback_FF
-
-//     if (rst) begin
-//         alu_data_out_d[WRITEBACK] <= '0;
-//         dm_read_data_d[WRITEBACK] <= '0;
-//         rf_write_enable_d[WRITEBACK] <= '0;
-//         rf_write_data_sel_d[WRITEBACK] <= '0;
-//         rf_write_addr_d[WRITEBACK] <= '0;
-//     end
-
-//     else begin
-//         alu_data_out_d[WRITEBACK] <= dm_data_bypass;
-//         dm_read_data_d[WRITEBACK] <= dm_read_data;
-//         //All signals below simply flopped to next stage
-//         rf_write_enable_d[WRITEBACK] <= rf_write_enable_d[MEMORY_ACCESS];
-//         rf_write_data_sel_d[WRITEBACK] <= rf_write_data_sel_d[MEMORY_ACCESS];
-//         rf_write_addr_d[WRITEBACK] <= rf_write_addr_d[MEMORY_ACCESS];
-//     end
-
-// end : memaccess_to_writeback_FF
 
 /////////////// Writeback Cycle ///////////////
 

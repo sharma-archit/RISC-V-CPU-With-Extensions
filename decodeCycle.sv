@@ -1,7 +1,7 @@
 module decodeCycle #(
     parameter XLEN = 64,
     parameter ALU_SEL_SIZE = 4,
-    parameter SHIFT_SIZE = 5,
+    parameter SHIFT_SIZE = 6,
     parameter FUNCT3_SIZE = 3,
     parameter JALR_OFFSET_SIZE = 12,
     parameter JAL_OFFSET_SIZE = 20,

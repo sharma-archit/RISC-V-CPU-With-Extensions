@@ -1,4 +1,4 @@
-# 32-Bit RISC-V CPU
+# 64-Bit RISC-V CPU
 
 This project is built upon my previous 32-bit RISC-V CPU project. The goal of this project is to implement all of the ratified RISC-V ISA extensions as of version 20240411:
 
