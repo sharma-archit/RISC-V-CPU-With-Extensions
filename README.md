@@ -2,7 +2,7 @@
 
 This project is built upon my previous 32-bit RISC-V CPU project. The goal of this project is to implement all of the ratified RISC-V ISA extensions as of version 20240411:
 
-RV64I Base Integer Instruction Set (WIP)
+RV64I Base Integer Instruction Set
 
 Zifencei Extension for Instruction-Fetch Fence (WIP)
 
