@@ -1,7 +1,7 @@
 module memoryAccessCycle #(
     parameter XLEN = 64,
     parameter BYTE = 8,
-    parameter HALFWORD = 16
+    parameter HALFWORD = 16,
     parameter WORD = 32)
 (
     input  dm_read_enable,
@@ -13,7 +13,7 @@ module memoryAccessCycle #(
     output logic [XLEN - 1:0] dm_data_bypass
 );
 
-enum {LOAD_B, LOAD_H, LOAD_W, LOAD_BU, LOAD_HU} LOAD_OP;
+enum {LOAD_B, LOAD_H, LOAD_W, LOAD_BU, LOAD_HU, LOAD_WU} LOAD_OP;
 
 logic [XLEN-1:0] dm_read_addr, dm_write_addr;
 logic [XLEN-1:0] read_data;
@@ -46,6 +46,8 @@ always_comb begin
             LOAD_H : dm_read_data = {{(XLEN - HALFWORD){read_data[HALFWORD - 1]}}, read_data[HALFWORD - 1:0]};
 
             LOAD_W : dm_read_data = {{(XLEN - WORD){read_data[WORD - 1]}}, read_data[WORD - 1:0]};
+
+            LOAD_D : dm_read_data = read_data;
 
             LOAD_BU : dm_read_data = {{(XLEN - BYTE){1'b0}}, read_data[BYTE - 1:0]};
 

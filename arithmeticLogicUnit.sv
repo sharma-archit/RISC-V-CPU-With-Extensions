@@ -15,7 +15,7 @@ module arithmeticLogicUnit #(
 
 enum {ADD, SUB, SLT, SLTU, ANDI, ORI, XORI, SLL, SRL, SRA, LUI, AUIPC, ADDW, SUBW, SLLW, SRLW, SRAW} ALU_OP_E; //ANDI, ORI, and XORI are used to avoid using SystemVerilog keywords
 
-logic signed [XLEN/2 - 1:0] intermediate_result
+logic signed [XLEN/2 - 1:0] intermediate_result;
 
 always_comb begin
 

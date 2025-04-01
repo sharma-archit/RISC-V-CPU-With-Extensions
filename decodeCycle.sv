@@ -6,7 +6,7 @@ module decodeCycle #(
     parameter JALR_OFFSET_SIZE = 12,
     parameter JAL_OFFSET_SIZE = 20,
     parameter LOAD_OFFSET = 12,
-    parameter REGISTER_SIZE = 5
+    parameter REGISTER_SIZE = 5,
     parameter INSTRUCTION_LENGTH = XLEN/2)
 (   
     input clk, 

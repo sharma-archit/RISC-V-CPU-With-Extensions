@@ -39,7 +39,7 @@ end
 
 always_comb begin
 
-    cpu_register = cpu_register_d
+    cpu_register = cpu_register_d;
     read_data1 = '0;
     read_data2 = '0;
 

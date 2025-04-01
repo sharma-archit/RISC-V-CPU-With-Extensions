@@ -1,5 +1,5 @@
 module fetchCycle #(
-    parameter XLEN = 64
+    parameter XLEN = 64,
     parameter INSTRUCTION_LENGTH = XLEN/2)
 (   
     input clk,

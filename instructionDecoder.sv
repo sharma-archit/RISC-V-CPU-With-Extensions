@@ -11,6 +11,7 @@ module instructionDecoder #(
     parameter LOAD_OFFSET = 12, //bit size of load offset in opcode
     parameter BYTE = 8,
     parameter HALFWORD = 16,
+    parameter WORD = 32,
     parameter IRII_IMMEDIATE = 12, //bit location of immediate value in irii opcode
     parameter SHIFT_SIZE = 6, //bit size of shift amount in opcode
     parameter FUNCT3 = 15, //bit location of funct3 in opcode
@@ -81,7 +82,7 @@ const logic [6:0] STOREW  = 7'b0100011;
 
 enum {ADD, SUB, SLT, SLTU, ANDI, ORI, XORI, SLL, SRL, SRA, ALU_LUI, ALU_AUIPC, ADDW, SUBW, SLLW, SRLW, SRAW} ALU_OP_E; //ANDI, ORI, and XORI are used to avoid using SystemVerilog keywords
 enum {JBL_JAL, JBL_JALR, BEQ, BNE, BLT, BGE, BLTU, BGEU} JBL_OP_E;
-enum {LOAD_B, LOAD_H, LOAD_W, LOAD_BU, LOAD_HU} LOAD_OP_E; // to size load data in the mem_access cycle
+enum {LOAD_B, LOAD_H, LOAD_W, LOAD_D, LOAD_BU, LOAD_HU, LOAD_WU} LOAD_OP_E; // to size load data in the mem_access cycle
 enum {ALU, DATA_MEM} WRITEBACK_DATA_SEL_E; // to select the source of write data in the writeback cycle
 
 always_comb begin : decoder
@@ -277,11 +278,17 @@ always_comb begin : decoder
                 if (instruction[FUNCT3 - 1:FUNCT3 - FUNCT3_SIZE] == 3'b010) begin //LW
                     dm_load_type = LOAD_W;
                 end
+                if (instruction[FUNCT3 - 1:FUNCT3 - FUNCT3_SIZE] == 3'b011) begin //LD
+                    dm_load_type = LOAD_D;
+                end
                 if (instruction[FUNCT3 - 1:FUNCT3 - FUNCT3_SIZE] == 3'b100) begin //LBU
                     dm_load_type = LOAD_BU;
                 end
                 if (instruction[FUNCT3 - 1:FUNCT3 - FUNCT3_SIZE] == 3'b101) begin //LHU
                     dm_load_type = LOAD_HU;
+                end
+                if (instruction[FUNCT3 - 1:FUNCT3 - FUNCT3_SIZE] == 3'b110) begin //LWU
+                    dm_load_type = LOAD_WU;
                 end
         end
 
@@ -305,7 +312,7 @@ always_comb begin : decoder
                 source_reg2 = instruction[SOURCE_REGISTER2_LOC - 1: SOURCE_REGISTER2_LOC - REGISTER_SIZE];
 
                 if (instruction[FUNCT3 - 1:FUNCT3 - FUNCT3_SIZE] == 3'b000) begin //SB
-                    dm_write_data = {{(XLEN - BYTE){rf_read_data2[BYTE - 1]}}, rf_read_data2[BYTE - 1:0]}; // data byte sign extended to 32 bits
+                    dm_write_data = {{(XLEN - BYTE){rf_read_data2[BYTE - 1]}}, rf_read_data2[BYTE - 1:0]}; // data byte sign extended to 64 bits
                 end
 
                 if (instruction[FUNCT3 - 1:FUNCT3 - FUNCT3_SIZE] == 3'b001) begin //SH
@@ -313,6 +320,9 @@ always_comb begin : decoder
                 end
 
                 if (instruction[FUNCT3 - 1:FUNCT3 - FUNCT3_SIZE] == 3'b010) begin //SW
+                    dm_write_data = {{(XLEN - WORD){rf_read_data2[WORD - 1]}}, rf_read_data2[WORD - 1:0]};
+                end
+                if (instruction[FUNCT3 - 1:FUNCT3 - FUNCT3_SIZE] == 3'b011) begin //SD
                     dm_write_data = rf_read_data2;
                 end
         end
