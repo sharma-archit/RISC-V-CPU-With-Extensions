@@ -5,21 +5,21 @@ import configparser
 # Define the RISC-V instruction set
 instruction_set = {
     'ADDI':         {'type': 'I', 'funct3': '000', 'opcode': '0010011',
-                    'imm': 'Enter the first number to ADD (-2048 to 2047): ',
-                    'rs1': 'Enter the register location of the second number to ADD (0 to 31): '},
+                    'imm': 'Enter the first number to add (-2048 to 2047): ',
+                    'rs1': 'Enter the register location of the second number to add (0 to 31): '},
     'SLTI':         {'type': 'I', 'funct3': '010', 'opcode': '0010011',
                     'imm': 'Enter the immediate value (-2048 to 2047): ',
                     'rs1': 'Enter the register location of the value you want to compare to the immediate value (0 to 31): '},
     'SLTIU':        {'type': 'I', 'funct3': '011', 'opcode': '0010011',
                     'imm': 'Enter the immediate value (-2048 to 2047): ',
                     'rs1': 'Enter the register location of the value you want to compare to the immediate value (0 to 31): '},
-    'ANDI':         {'type': 'I', 'funct3': '000', 'opcode': '0010011',
+    'ANDI':         {'type': 'I', 'funct3': '111', 'opcode': '0010011',
                     'imm': 'Enter the first number to AND (-2048 to 2047): ',
                     'rs1': 'Enter the register location of the second number to AND (0 to 31): '},
-    'ORI':          {'type': 'I', 'funct3': '000', 'opcode': '0010011',
+    'ORI':          {'type': 'I', 'funct3': '110', 'opcode': '0010011',
                     'imm': 'Enter the first number to OR (-2048 to 2047): ',
                     'rs1': 'Enter the register location of the second number to OR (0 to 31): '},
-    'XORI':         {'type': 'I', 'funct3': '000', 'opcode': '0010011',
+    'XORI':         {'type': 'I', 'funct3': '100', 'opcode': '0010011',
                     'imm': 'Enter the first number to XOR (-2048 to 2047): ',
                     'rs1': 'Enter the register location of the second number to XOR (0 to 31): '},
     'SLLI':         {'type': 'I', 'funct3': '001', 'opcode': '0010011', 'special': True,
@@ -36,8 +36,8 @@ instruction_set = {
     'AUIPC':        {'type': 'U', 'opcode': '0010111',
                     'imm': 'Enter immediate value (0 to 1048575): '},
     'ADD':          {'type': 'R', 'funct7': '0000000', 'funct3': '000', 'opcode': '0110011',
-                    'rs1': 'Enter the register location of the first value to ADD (0 to 31): ',
-                    'rs2': 'Enter the register location of the second value of ADD (0 to 31): '},
+                    'rs1': 'Enter the register location of the first value to add (0 to 31): ',
+                    'rs2': 'Enter the register location of the second value of add (0 to 31): '},
     'SLT':          {'type': 'R', 'funct7': '0000000', 'funct3': '010', 'opcode': '0110011',
                     'rs1': 'Enter the register location of the value to compare to (0 to 31): ',
                     'rs2': 'Enter the register location of the value to compare (0 to 31): '},
@@ -132,34 +132,34 @@ instruction_set = {
                     'rs1': 'Enter the register location of the second value to calculate the memory address (0 to 31): ',
                     'rs2': 'Enter the register location of the value to move to memory (0 to 31): '},
     'FENCE':        {'funct3': '000', 'opcode': '0001111',
-                    'fm': '0000',
-                    'pred': '0000',
-                    'succ': '0000',
+                    'fm': 0b0000,
+                    'pred': 0b0000,
+                    'succ': 0b0000,
                     'rs1': 0b00000,
                     'rd': 0b00000},
     'FENCE.TSO':    {'funct3': '000', 'opcode': '0001111',
-                    'fm': '1000',
-                    'pred': '0011',
-                    'succ': '0011',
+                    'fm': 0b1000,
+                    'pred': 0b0011,
+                    'succ': 0b0011,
                     'rs1': 0b00000,
                     'rd': 0b00000},
     'PAUSE':        {'funct3': '000', 'opcode': '0001111',
-                    'fm': '0000',
-                    'pred': '0001',
-                    'succ': '0000',
+                    'fm': 0b0000,
+                    'pred': 0b0001,
+                    'succ': 0b0000,
                     'rs1': 0b00000,
                     'rd': 0b00000},
     'ECALL':        {'type': 'I', 'funct3': '000', 'opcode': '1110011',
                     'imm': 0b000000000000,
                     'rs1': 0b00000,
-                    'rs2': 0b00000},
+                    'rd': 0b00000},
     'EBREAK':       {'type': 'I', 'funct3': '000', 'opcode': '1110011',
                     'imm': 0b000000000001,
                     'rs1': 0b00000,
-                    'rs2': 0b00000},
+                    'rd': 0b00000},
     'ADDIW':        {'type': 'I', 'funct3': '000', 'opcode': '0011011',
-                    'imm': 'Enter the first number to ADD (-2048 to 2047): ',
-                    'rs1': 'Enter the register location of the second number to ADD (0 to 31): '},
+                    'imm': 'Enter the first number to add (-2048 to 2047): ',
+                    'rs1': 'Enter the register location of the second number to add (0 to 31): '},
     'SLLIW':        {'type': 'I', 'funct3': '001', 'opcode': '0011011', 'special': True,
                     'imm': 'Enter amount to shift by (0 to 31): ',
                     'rs1': 'Enter register location of value to shift (0 to 31): '},
@@ -170,8 +170,8 @@ instruction_set = {
                     'imm': 'Enter amount to shift by (0 to 31): ',
                     'rs1': 'Enter register location of value to shift (0 to 31): '},
     'ADDW':         {'type': 'R', 'funct7': '0000000', 'funct3': '000', 'opcode': '0111011',
-                    'rs1': 'Enter the register location of the first value to ADD (0 to 31): ',
-                    'rs2': 'Enter the register location of the second value of ADD (0 to 31): '},
+                    'rs1': 'Enter the register location of the first value to add (0 to 31): ',
+                    'rs2': 'Enter the register location of the second value of add (0 to 31): '},
     'SUBW':         {'type': 'R', 'funct7': '0100000', 'funct3': '000', 'opcode': '0111011',
                     'rs1': 'Enter the register location of the value to subtract by (0 to 31): ',
                     'rs2': 'Enter the register location of the value to subtract (0 to 31): '},
@@ -207,13 +207,13 @@ instructions = []
 written_registers = set()
 
 # Create the grid window
-window, grid_labels = create_grid_window(grid)
+# window, grid_labels = create_grid_window(grid)
 
 # Get user input for instruction(s)
 while True:
     instr = input("Enter the RISC-V instruction (or 'done' to finish): ").upper()
     if instr == 'DONE':
-        window.destroy()
+        # window.destroy()
         break
     if instr not in instruction_set:
         print("Invalid instruction. Please enter a valid RISC-V instruction.")
@@ -228,7 +228,7 @@ while True:
             imm = get_valid_input(instruction_set[instr]['imm'], -2048, 2047)  # 12-bit signed immediate
     elif instruction_set[instr]['opcode'] in ['0010111', '1101111', '0110111']:
         imm = get_valid_input(instruction_set[instr]['imm'], 0, 1048575)  # 20-bit unsigned immediate
-    if instruction_set[instr]['opcode'] in ['0110011', '0010011', '0100011', '1100011', '0011011', '0111011', '0110111', '1100111', '0000011']:
+    if instruction_set[instr]['opcode'] in ['0110011', '0010011', '0100011', '1100011', '0011011', '0111011', '1100111', '0000011']:
         rs1 = get_valid_input(instruction_set[instr]['rs1'], 0, 31)
     if instruction_set[instr]['opcode'] in ['0110011', '0100011', '1100011', '0111011']:
         rs2 = get_valid_input(instruction_set[instr]['rs2'], 0, 31)
@@ -246,16 +246,16 @@ while True:
     if instruction_set[instr]['opcode'] == '1110011':
         imm = instruction_set[instr]['imm']
         rs1 = instruction_set[instr]['rs1']
-        rd = instruction_set[instr]['rs2']
+        rd = instruction_set[instr]['rd']
 
     binary_instruction = create_instruction(instruction_set, instr, rs2, rs1, rd, imm)
     instructions.append(binary_instruction)
 
-    update_grid_values(instr, rs1, rs2, rd, imm, grid, grid_labels, memory, PC)
+    # update_grid_values(instr, rs1, rs2, rd, imm, grid, grid_labels, memory, PC)
 
     PC += 4
 
-    memory_grid_column, grid_labels = update_grid(grid, grid_labels, memory, memory_grid_column, window)
+    # memory_grid_column, grid_labels = update_grid(grid, grid_labels, memory, memory_grid_column, window)
 
 if instructions:
     with open(testbench_file, 'r') as file:
@@ -294,4 +294,4 @@ if instructions:
 else:
     print("No instructions to write to the testbench file.")
 
-window.mainloop()
+# window.mainloop()
