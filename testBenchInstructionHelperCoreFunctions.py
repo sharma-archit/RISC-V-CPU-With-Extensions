@@ -30,13 +30,13 @@ def create_instruction(instruction_set, instr, rs2=None, rs1=None, rd=None, imm=
         imm_bin = get_binary_string(imm, 12)
         rs2_bin = get_binary_string(rs2, 5)
         rs1_bin = get_binary_string(rs1, 5)
-        instruction = imm_bin[11:4:-1] + rs2_bin + rs1_bin + funct3 + imm_bin[4:-1:-1] + opcode
+        instruction = imm_bin[0:7] + rs2_bin + rs1_bin + funct3 + imm_bin[7:12] + opcode
 
     elif opcode == '1100011':                   # B-type
         imm_bin = get_binary_string(imm, 12)
         rs2_bin = get_binary_string(rs2, 5)
         rs1_bin = get_binary_string(rs1, 5)
-        instruction = imm_bin[0] + imm_bin[2:7] + rs2_bin + rs1_bin + funct3 + imm_bin[8:11] + imm_bin[1] + opcode
+        instruction = imm_bin[0] + imm_bin[2:8] + rs2_bin + rs1_bin + funct3 + imm_bin[8:12] + imm_bin[1] + opcode
 
     elif opcode in ['0110111', '0010111']:       # U-type
         imm_bin = get_binary_string(imm, 20)
@@ -52,7 +52,7 @@ def create_instruction(instruction_set, instr, rs2=None, rs1=None, rd=None, imm=
     elif opcode == '1101111':                   # J-type
         imm_bin = get_binary_string(imm, 20)
         rd_bin = get_binary_string(rd, 5)
-        instruction = imm_bin[0] + imm_bin[11:19] + imm_bin[10] + imm_bin[1:9] + rd_bin + opcode
+        instruction = imm_bin[0] + imm_bin[10:20] + imm_bin[9] + imm_bin[1:9] + rd_bin + opcode
 
     elif opcode == '0001111':                   # FENCE
         imm_bin = imm

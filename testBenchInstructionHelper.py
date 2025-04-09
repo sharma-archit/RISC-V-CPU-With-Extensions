@@ -202,6 +202,7 @@ PC = 0
 
 # Initialize the instructions list
 instructions = []
+instructionname = []
 
 # Initialize a set to keep track of written registers
 written_registers = set()
@@ -219,6 +220,7 @@ while True:
         print("Invalid instruction. Please enter a valid RISC-V instruction.")
         continue
 
+    instructionname.append(instr)
     rs2 = rs1 = rd = imm = None
 
     if instruction_set[instr]['opcode'] in ['0010011', '0100011', '1100011', '0011011', '1100111', '0000011']:
@@ -266,17 +268,16 @@ if instructions:
     inside_initial_block = False
     new_lines = []
     for line in lines:
-        if 'initial begin' in line:
+        if 'dbg_addr = 0;' in line:
             inside_initial_block = True
             new_lines.append(line)
-            new_lines.append('\n    rst = 1;\n    dbg_wr_en = 0;\n    dbg_addr = 0;\n')
-            new_lines.append(f'    dbg_instr = 32\'b{instructions[0]};\n')
+            new_lines.append(f'\n    dbg_instr = 32\'b{instructions[0]};      //{instructionname[0]}\n')
             new_lines.append('    #(2*CLK_PERIOD)\n    dbg_wr_en = 1;\n    #CLK_PERIOD\n    dbg_wr_en = 0;\n    #CLK_PERIOD\n')
         elif 'end' in line and inside_initial_block:
-            for instruction in instructions[1:]:
+            for instruction, name in zip(instructions[1:], instructionname[1:]):
                 dbg_addr += 4
                 new_lines.append(f'    dbg_addr = {dbg_addr};\n')
-                new_lines.append(f'    dbg_instr = 32\'b{instruction};\n')
+                new_lines.append(f'    dbg_instr = 32\'b{instruction};       //{name}\n')
                 new_lines.append('    #(2*CLK_PERIOD)\n    dbg_wr_en = 1;\n    #CLK_PERIOD\n    dbg_wr_en = 0;\n    #CLK_PERIOD\n')
             new_lines.append('    rst = 0;\n\n')
             new_lines.append(line)
