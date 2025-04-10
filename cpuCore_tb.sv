@@ -18,35 +18,6 @@ cpuCore cpu_core(.*);
     dbg_wr_en = 0;
     dbg_addr = 0;
 
-    dbg_instr = 32'b00000000001000001000000110110011;      //ADD
-    #(2*CLK_PERIOD)
-    dbg_wr_en = 1;
-    #CLK_PERIOD
-    dbg_wr_en = 0;
-    #CLK_PERIOD
-    dbg_addr = 4;
-    dbg_instr = 32'b00000000001100010000000010010011;       //ADDI
-    #(2*CLK_PERIOD)
-    dbg_wr_en = 1;
-    #CLK_PERIOD
-    dbg_wr_en = 0;
-    #CLK_PERIOD
-    dbg_addr = 8;
-    dbg_instr = 32'b00000000001000001000000110111011;       //ADDW
-    #(2*CLK_PERIOD)
-    dbg_wr_en = 1;
-    #CLK_PERIOD
-    dbg_wr_en = 0;
-    #CLK_PERIOD
-    dbg_addr = 12;
-    dbg_instr = 32'b00000000001100010000000010011011;       //ADDIW
-    #(2*CLK_PERIOD)
-    dbg_wr_en = 1;
-    #CLK_PERIOD
-    dbg_wr_en = 0;
-    #CLK_PERIOD
-    rst = 0;
-
     end
 
     // clock generator

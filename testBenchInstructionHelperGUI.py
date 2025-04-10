@@ -37,7 +37,7 @@ def update_grid(grid, grid_labels, memory, memory_grid_column, window):
         address, value = next(iter(memory.items()))
         memory_address_exists = check_memory_address(address, grid_labels)
 
-        if not memory_address_exists:
+        if not memory_address_exists:   # If memory block isn't in grid create a new block and add it to the grid
             memory_grid_column += 1
             grid.append(value)
             frame = tk.Frame(window, bg='black', bd=1, relief="solid", highlightbackground="white", highlightcolor="white", highlightthickness=1)
@@ -52,12 +52,23 @@ def update_grid(grid, grid_labels, memory, memory_grid_column, window):
             value_label = ttk.Label(frame, text="", style="TLabel")
             value_label.grid(row=2, column=0, sticky="nsew")
             grid_labels.append(value_label)
-        elif memory_address_exists:
-            grid[32 + address] = value
+            window.update_idletasks()
+        elif memory_address_exists: # If memory block does exist change its value in the grid
+            # grid[32 + address] = value
 
+            target_address = f"M{address}"
+            for label in grid_labels:
+                frame = label.master
+                widgets = frame.winfo_children()
+                for i, widget in enumerate(widgets):
+                    if isinstance(widget, ttk.Label) and widget.cget("text") == target_address:
+                        for j in range(i + 1, len(widgets)):
+                            next_widget = widgets[j]
+                            if isinstance(next_widget, ttk.Label) and next_widget.cget("text") != target_address:
+                                next_widget.config(text=value)
     memory.clear()
 
-    for i in range(len(grid)):
+    for i in range(len(grid)):  # Update GUI
         value = grid[i]
         style = "Highlighted.TLabel" if value != 0 else "TLabel"
         grid_labels[i].config(text=value, style=style)
@@ -68,7 +79,7 @@ def update_grid(grid, grid_labels, memory, memory_grid_column, window):
     return memory_grid_column, grid_labels
 
 def update_grid_values(instr, rs1, rs2, rd, imm, grid, grid_labels, memory, PC):
-    if instr == 'ADDI':
+    if instr in ['ADDI', 'ADDIW']:
         grid[rd] = grid[rs1] + imm
     elif instr == 'SLTI':
         grid[rd] = 1 if grid[rs1] < imm else 0
@@ -81,16 +92,16 @@ def update_grid_values(instr, rs1, rs2, rd, imm, grid, grid_labels, memory, PC):
     elif instr == 'XORI':
         grid[rd] = grid[rs1] ^ imm
     elif instr == 'SLLI':
-        grid[rd] = grid[rs1] << (imm & 0b11111)
+        grid[rd] = grid[rs1] << (imm & 0b111111)
     elif instr == 'SRLI':
-        grid[rd] = logical_right_shift(grid[rs1], (imm & 0b11111))
+        grid[rd] = logical_right_shift(grid[rs1], (imm & 0b111111))
     elif instr == 'SRAI':
-        grid[rd] = grid[rs1] >> (imm & 0b11111)
+        grid[rd] = grid[rs1] >> (imm & 0b111111)
     elif instr == 'LUI':
         grid[rd] = (imm << 12) & 0xFFFFF000
     elif instr in ['AUIPC']:
         grid[rd] = imm + PC
-    elif instr == 'ADD':
+    elif instr in ['ADD', 'ADDW']:
         grid[rd] = grid[rs1] + grid[rs2]
     elif instr == 'SLT':
         grid[rd] = 1 if grid[rs1] < grid[rs2] else 0
@@ -102,18 +113,22 @@ def update_grid_values(instr, rs1, rs2, rd, imm, grid, grid_labels, memory, PC):
         grid[rd] = grid[rs1] | grid[rs2]
     elif instr == 'XOR':
         grid[rd] = grid[rs1] ^ grid[rs2]
-    elif instr == 'SLL':
+    elif instr in ['SLL', 'SLLW']:
         grid[rd] = (grid[rs1] << (grid[rs2] & 0b11111))
-    elif instr == 'SRL':
+    elif instr in ['SRL', 'SRLW']:
         grid[rd] = logical_right_shift(grid[rs1], (grid[rs2] & 0b11111))
-    elif instr == 'SUB':
+    elif instr in ['SUB', 'SUBW']:
         grid[rd] = grid[rs2] - grid[rs1]
-    elif instr == 'SRA':
+    elif instr in ['SRA', 'SRAW']:
         grid[rd] = grid[rs1] >> (grid[rs2] & 0b11111)
     elif instr in ['JAL', 'JALR']:
         grid[rd] = PC + 4
-    elif instr == 'LW':
+    elif instr == 'LD':
         grid[rd] = get_memory_value(imm + grid[rs1], grid_labels)
+    elif instr == 'LW':
+        grid[rd] = get_memory_value(imm + grid[rs1], grid_labels, 32)
+    elif instr == 'LWU':
+        grid[rd] = convert_to_unsigned(get_memory_value(imm + grid[rs1], grid_labels, 32))
     elif instr == 'LH':
         grid[rd] = get_memory_value(imm + grid[rs1], grid_labels, 16)
     elif instr == 'LHU':
@@ -122,14 +137,22 @@ def update_grid_values(instr, rs1, rs2, rd, imm, grid, grid_labels, memory, PC):
         grid[rd] = get_memory_value(imm + grid[rs1], grid_labels, 8)
     elif instr == 'LBU':
         grid[rd] = convert_to_unsigned(get_memory_value(imm + grid[rs1], grid_labels, 8))
-    elif instr == 'SW':
+    elif instr == 'SD':
         memory[grid[rs1] + imm] = grid[rs2]
+    elif instr == 'SW':
+        memory[grid[rs1] + imm] = sign_extend(grid[rs2], 32)
     elif instr == 'SH':
         memory[grid[rs1] + imm] = sign_extend(grid[rs2], 16)
     elif instr == 'SB':
         memory[grid[rs1] + imm] = sign_extend(grid[rs2], 8)
+    elif instr == 'SLLIW':
+        grid[rd] = grid[rs1] << (imm & 0b11111)
+    elif instr == 'SRLIW':
+        grid[rd] = logical_right_shift(grid[rs1], (imm & 0b11111))
+    elif instr == 'SRAIW':
+        grid[rd] = grid[rs1] >> (imm & 0b11111)
 
-def get_memory_value(memory_address, grid_labels, size = 32):
+def get_memory_value(memory_address, grid_labels, size = 64):
     target_address = f"M{memory_address}"
     for label in grid_labels:
         frame = label.master
@@ -143,19 +166,19 @@ def get_memory_value(memory_address, grid_labels, size = 32):
                         if value_text:
                             value = sign_extend(int(value_text), size)
                             return value
-
-    return None
+    
+    return 0
 
 def convert_to_unsigned(value):
     if value < 0:
-        value += 2**32
+        value += 2**64
+
     return value
 
 def logical_right_shift(value, shift_amount):
-    unsigned_value = convert_to_unsigned(value)
-    result = unsigned_value >> shift_amount
+    value = convert_to_unsigned(value) if value < 0 else value
 
-    return result
+    return value >> shift_amount
 
 def sign_extend(value, size):
     #size is the final bit size to extend the value to
@@ -166,6 +189,7 @@ def sign_extend(value, size):
         extended_value = value - (1 << size)
     else:
         extended_value = value
+
     return extended_value
 
 def size_inputs(value, bits):
@@ -182,4 +206,5 @@ def check_memory_address(memory_address, grid_labels):
         for widget in widgets:
             if isinstance(widget, ttk.Label) and widget.cget("text") == target_address:
                 return True
+
     return False

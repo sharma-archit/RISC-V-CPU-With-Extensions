@@ -87,11 +87,7 @@ enum {ALU, DATA_MEM} WRITEBACK_DATA_SEL_E; // to select the source of write data
 
 always_comb begin : decoder
 
-    // default all control signals to 0
-    destination_reg = 0;
-    source_reg1 = 0;
-    source_reg2 = 0;
-    
+    // default all control signals to 0    
     alu_enable = 0;
     alu_sel = 0;
     alu_shift_amt = '0;
@@ -118,6 +114,10 @@ always_comb begin : decoder
     dm_write_enable = '0;
     dm_write_data = '0;
     dm_load_type = '0;
+
+    destination_reg = 0;
+    source_reg1 = 0;
+    source_reg2 = 0;
 
     // decode each instruction opcode
     case (instruction[6:0])

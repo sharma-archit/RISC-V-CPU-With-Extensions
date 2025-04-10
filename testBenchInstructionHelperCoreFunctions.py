@@ -2,7 +2,6 @@ def create_instruction(instruction_set, instr, rs2=None, rs1=None, rd=None, imm=
     if instr not in instruction_set:
         raise ValueError(f"Instruction {instr} not supported")
 
-    # instr_type = instruction_set[instr]['type']
     opcode = instruction_set[instr]['opcode']
     funct3 = instruction_set[instr].get('funct3', '')
     funct7 = instruction_set[instr].get('funct7', '')
@@ -86,11 +85,6 @@ def create_instruction(instruction_set, instr, rs2=None, rs1=None, rd=None, imm=
 
     return instruction
 
-# def to_signed(value):
-#     if value & (1 << 31):  # Check if sign bit is set
-#         return value - (1 << 32)
-#     return value
-
 def get_valid_input(prompt, min_value, max_value):
     while True:
         try:
@@ -99,6 +93,7 @@ def get_valid_input(prompt, min_value, max_value):
                 return value
             else:
                 print(f"Please enter a value between {min_value} and {max_value}.")
+
         except ValueError:
             print("Invalid input. Please enter an integer.")
 
