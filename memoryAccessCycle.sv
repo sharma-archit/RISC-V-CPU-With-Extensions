@@ -6,14 +6,14 @@ module memoryAccessCycle #(
 (
     input  dm_read_enable,
     input  dm_write_enable,
-    input [XLEN-1:0] alu_data_out,
+    input [XLEN - 1:0] alu_data_out,
     input  [XLEN - 1:0] dm_write_data,
     input [2:0] dm_load_type,
     output logic [XLEN - 1:0] dm_read_data,
     output logic [XLEN - 1:0] dm_data_bypass
 );
 
-enum {LOAD_B, LOAD_H, LOAD_W, LOAD_BU, LOAD_HU, LOAD_WU} LOAD_OP;
+enum {LOAD_B, LOAD_H, LOAD_W, LOAD_D, LOAD_BU, LOAD_HU, LOAD_WU} LOAD_OP;
 
 logic [XLEN-1:0] dm_read_addr, dm_write_addr;
 logic [XLEN-1:0] read_data;

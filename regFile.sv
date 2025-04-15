@@ -20,8 +20,6 @@ localparam NUM_REGISTERS = 32; // Number of registers in the register file
 logic [NUM_REGISTERS - 1:0][XLEN - 1:0] cpu_register;
 logic[NUM_REGISTERS - 1:0][XLEN - 1:0] cpu_register_d;
 
-assign cpu_register[0] = '0; // register x0 hardwired to 0
-
 always_ff @(posedge clk) begin
 
     if (rst) begin
@@ -32,7 +30,8 @@ always_ff @(posedge clk) begin
 
     else begin
         
-        cpu_register_d <= cpu_register;
+        cpu_register_d[0] <= '0; // register x0 hardwired to 0
+        cpu_register_d[NUM_REGISTERS - 1:1] <= cpu_register[NUM_REGISTERS - 1:1];
 
     end
 end

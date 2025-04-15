@@ -22,55 +22,54 @@ enum logic [2:0] {FETCH, DECODE, EXECUTE, MEMORY_ACCESS, WRITEBACK} CPU_PIPELINE
 enum logic [1:0] {DECODE_RF_OPERAND, MEM_ACCESS_DM_OPERAND, EXECUTE_ALU_OPERAND, MEM_ACCESS_ALU_OPERAND} DATA_FWD_SOURCE;
 
 // combinational signals
-logic [XLEN - 1: 0] instruction;
+logic [XLEN - 1:0] instruction;
 logic [WRITEBACK:0] [XLEN - 1:0] PC;
 
 logic alu_enable;
-logic [ALU_SEL_SIZE - 1: 0] alu_sel;
-logic [SHIFT_SIZE - 1: 0] alu_shift_amt;
-logic [XLEN - 1: 0] alu_data_in_a;
-logic [XLEN - 1: 0] alu_data_in_b;
-logic [XLEN - 1: 0] alu_data_out;
+logic [ALU_SEL_SIZE - 1:0] alu_sel;
+logic [SHIFT_SIZE - 1:0] alu_shift_amt;
+logic [XLEN - 1:0] alu_data_in_a;
+logic [XLEN - 1:0] alu_data_in_b;
+logic [XLEN - 1:0] alu_data_out;
 
 logic rf_writeback_enable;
-logic [REGISTER_SIZE - 1: 0] rf_writeback_addr;
-logic [XLEN - 1: 0] rf_writeback_data;
+logic [REGISTER_SIZE - 1:0] rf_writeback_addr;
+logic [XLEN - 1:0] rf_writeback_data;
     
 logic rf_write_enable;
-logic [REGISTER_SIZE - 1: 0] rf_write_addr;
+logic [REGISTER_SIZE - 1:0] rf_write_addr;
 logic [1:0] rf_write_data_sel;
     
 logic dm_read_enable;
 logic dm_write_enable;
-logic [XLEN - 1: 0] dm_write_data;
+logic [XLEN - 1:0] dm_write_data;
 logic [2:0] dm_load_type;
-logic [XLEN - 1: 0] dm_read_data;
-logic [XLEN - 1: 0] dm_data_bypass;
+logic [XLEN - 1:0] dm_read_data;
+logic [XLEN - 1:0] dm_data_bypass;
 
 // pipelined signals
-logic [DECODE:0] [XLEN - 1: 0] instruction_d;
-logic [WRITEBACK:0] [XLEN - 1: 0] PC_d;
+logic [DECODE:0] [XLEN - 1:0] instruction_d;
+logic [WRITEBACK:0] [XLEN - 1:0] PC_d;
 
 logic [EXECUTE:0] alu_enable_d;
-logic [EXECUTE:0] [ALU_SEL_SIZE - 1: 0] alu_sel_d;
-logic [EXECUTE:0] [SHIFT_SIZE - 1: 0] alu_shift_amt_d;
-logic [EXECUTE:0] [XLEN - 1: 0] alu_data_in_a_d;
-logic [EXECUTE:0] [XLEN - 1: 0] alu_data_in_b_d;
-logic [WRITEBACK:0] [XLEN - 1: 0] alu_data_out_d;
+logic [EXECUTE:0] [ALU_SEL_SIZE - 1:0] alu_sel_d;
+logic [EXECUTE:0] [SHIFT_SIZE - 1:0] alu_shift_amt_d;
+logic [EXECUTE:0] [XLEN - 1:0] alu_data_in_a_d;
+logic [EXECUTE:0] [XLEN - 1:0] alu_data_in_b_d;
+logic [WRITEBACK:0] [XLEN - 1:0] alu_data_out_d;
 
 logic [WRITEBACK:0] rf_writeback_enable_d;
-logic [WRITEBACK:0] [XLEN - 1: 0] rf_writeback_addr_d;
+logic [WRITEBACK:0] [XLEN - 1:0] rf_writeback_addr_d;
     
 logic [WRITEBACK:0] rf_write_enable_d;
-logic [WRITEBACK:0] [REGISTER_SIZE - 1: 0] rf_write_addr_d;
+logic [WRITEBACK:0] [REGISTER_SIZE - 1:0] rf_write_addr_d;
 logic [WRITEBACK:0] [1:0] rf_write_data_sel_d;
     
 logic [MEMORY_ACCESS:0] dm_read_enable_d;
 logic [MEMORY_ACCESS:0] dm_write_enable_d;
-logic [MEMORY_ACCESS:0] [XLEN - 1: 0] dm_write_data_d;
+logic [MEMORY_ACCESS:0] [XLEN - 1:0] dm_write_data_d;
 logic [MEMORY_ACCESS:0] [2:0] dm_load_type_d;
-logic [WRITEBACK:0]    [XLEN - 1: 0] dm_read_data_d;
-logic [MEMORY_ACCESS:0] [XLEN - 1: 0] dm_data_bypass_d;
+logic [MEMORY_ACCESS:0] [XLEN - 1:0] dm_data_bypass_d;
 
 // data hazard control signals
 logic f_to_d_enable_ff, f_to_d_enable_ff_prev;

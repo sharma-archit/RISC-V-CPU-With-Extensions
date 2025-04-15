@@ -285,7 +285,7 @@ if instructions:
         if 'dbg_addr = 0;' in line:     # Checks for beginning of area to edit
             inside_initial_block = True
             new_lines.append(line)
-            new_lines.append(f'\n    dbg_instr = 32\'b{instructions[0]};       //{instructionname[0]}\n')
+            new_lines.append(f'    dbg_instr = 32\'b{instructions[0]};       //{instructionname[0]}\n')
             new_lines.append('    #(2*CLK_PERIOD)\n    dbg_wr_en = 1;\n    #CLK_PERIOD\n    dbg_wr_en = 0;\n    #CLK_PERIOD\n')
         elif 'end' in line and inside_initial_block: # Finds end statement in initial block and writes instructions before the end statement
             for instruction, name in zip(instructions[1:], instructionname[1:]):

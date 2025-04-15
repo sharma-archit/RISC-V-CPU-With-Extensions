@@ -7,8 +7,8 @@ module dataMemory #(
     input  write_enable,
     input  [XLEN - 1:0] read_addr,
     input  [XLEN - 1:0] write_addr,
-    input signed [3:0][7:0] write_data,
-    output logic signed [3:0][7:0] read_data
+    input  [7:0][7:0] write_data,
+    output logic [7:0][7:0] read_data
 );
 
 logic [2^(XLEN - 1) - 1:0][7:0] data_memory; // data memory is half the address-space
