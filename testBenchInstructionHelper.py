@@ -31,7 +31,6 @@ instruction_set = {
                     'imm': 'Enter amount to shift by (0 to 63): ',
                     'rs1': 'Enter register location of value to shift (0 to 31): '},
 
-
     'LUI':          {'type': 'U', 'opcode': '0110111',
                     'imm': 'Enter immediate value (0 to 1048575): '},
 

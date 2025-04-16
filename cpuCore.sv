@@ -1,19 +1,20 @@
 module cpuCore #(
-    parameter XLEN = 32,
+    parameter XLEN = 64,
     parameter ALU_SEL_SIZE = 4,
     parameter SHIFT_SIZE = 6,
     parameter FUNCT3_SIZE = 3,
     parameter JALR_OFFSET_SIZE = 12,
     parameter JAL_OFFSET_SIZE = 20,
     parameter LOAD_OFFSET = 12,
-    parameter REGISTER_SIZE = 5)
+    parameter REGISTER_SIZE = 5,
+    parameter INSTRUCTION_LENGTH = XLEN/2)
 (
     input clk,
     input rst,
     // debug ports to write instruction memory for testing
     input dbg_wr_en,
     input [XLEN - 1:0] dbg_addr,
-    input [XLEN - 1:0] dbg_instr
+    input [INSTRUCTION_LENGTH - 1:0] dbg_instr
 );
 
 const logic A = 0;
@@ -23,7 +24,7 @@ enum logic [1:0] {DECODE_RF_OPERAND, MEM_ACCESS_DM_OPERAND, EXECUTE_ALU_OPERAND,
 
 // combinational signals
 logic [XLEN - 1:0] instruction;
-logic [WRITEBACK:0] [XLEN - 1:0] PC;
+logic [DECODE:0] [XLEN - 1:0] PC;
 
 logic alu_enable;
 logic [ALU_SEL_SIZE - 1:0] alu_sel;
