@@ -55,14 +55,23 @@ def create_instruction(instruction_set, instr, rs2=None, rs1=None, rd=None, imm=
 
     elif opcode == '0001111':                   # FENCE
         imm_bin = imm
-        rs1_bin = get_binary_string(rs1, 5)
-        rd_bin = get_binary_string(rd, 5)
+        # rs1_bin = get_binary_string(rs1, 5)
+        # rd_bin = get_binary_string(rd, 5)
+
+        rs1_bin = rs1
+        rd_bin = rd
+
         instruction = imm_bin + rs1_bin + funct3 + rd_bin + opcode
 
     elif opcode == '1110011':                   # ECB
-        imm_bin = get_binary_string(imm, 12)
-        rs1_bin = get_binary_string(rs1, 5)
-        rd_bin = get_binary_string(rd, 5)
+        # imm_bin = get_binary_string(imm, 12)
+        # rs1_bin = get_binary_string(rs1, 5)
+        # rd_bin = get_binary_string(rd, 5)
+
+        imm_bin = imm
+        rs1_bin = rs1
+        rd_bin = rd
+
         instruction = imm_bin + rs1_bin + funct3 + rd_bin + opcode
 
     elif opcode == '0011011':                   # I-type (64-bit)
@@ -104,3 +113,32 @@ def get_binary_string(value, bits):
     value = value & (1 << bits) - 1
 
     return format(value, f'0{bits}b')
+
+def complete_test(instruction_set, instructions, instructionname):
+    total_regs = 32
+    
+    for idx, (name, details) in enumerate(instruction_set.items()):
+
+        instructionname.append(name)
+
+        rd = idx % total_regs
+        rs1 = (idx + 1) % total_regs
+        rs2 = (idx + 2) % total_regs
+        imm = 1
+
+        opcode = details['opcode']
+
+        if opcode == '0001111':  # FENCE and PAUSE
+            imm = details['fm'] + details['pred'] + details['succ']
+            rs1 = details['rs1']
+            rd  = details['rd']
+
+        elif opcode == '1110011':  #ECALL/EBREAK/CSR
+            imm = details['imm']
+            rs1 = details['rs1']
+            rd  = details['rd']
+
+        binary_instruction = create_instruction(instruction_set, name, rs2, rs1, rd, imm)
+        instructions.append(binary_instruction)
+
+    return instructions, instructionname

@@ -1,4 +1,4 @@
-from testBenchInstructionHelperCoreFunctions import create_instruction, get_valid_input
+from testBenchInstructionHelperCoreFunctions import create_instruction, get_valid_input, complete_test
 from testBenchInstructionHelperGUI import update_grid, create_grid_window, update_grid_values
 import configparser
 
@@ -139,32 +139,32 @@ instruction_set = {
                     'rs2': 'Enter the register location of the value to move to memory (0 to 31): '},
 
     'FENCE':        {'funct3': '000', 'opcode': '0001111',
-                    'fm': 0b0000,
-                    'pred': 0b0000,
-                    'succ': 0b0000,
-                    'rs1': 0b00000,
-                    'rd': 0b00000},
+                    'fm': '0000',
+                    'pred': '0000',
+                    'succ': '0000',
+                    'rs1': '00000',
+                    'rd': '00000'},
     'FENCE.TSO':    {'funct3': '000', 'opcode': '0001111',
-                    'fm': 0b1000,
-                    'pred': 0b0011,
-                    'succ': 0b0011,
-                    'rs1': 0b00000,
-                    'rd': 0b00000},
+                    'fm': '1000',
+                    'pred': '0011',
+                    'succ': '0011',
+                    'rs1': '00000',
+                    'rd': '00000'},
     'PAUSE':        {'funct3': '000', 'opcode': '0001111',
-                    'fm': 0b0000,
-                    'pred': 0b0001,
-                    'succ': 0b0000,
-                    'rs1': 0b00000,
-                    'rd': 0b00000},
+                    'fm': '0000',
+                    'pred': '0001',
+                    'succ': '0000',
+                    'rs1': '00000',
+                    'rd': '00000'},
 
     'ECALL':        {'type': 'I', 'funct3': '000', 'opcode': '1110011',
-                    'imm': 0b000000000000,
-                    'rs1': 0b00000,
-                    'rd': 0b00000},
+                    'imm': '000000000000',
+                    'rs1': '00000',
+                    'rd': '00000'},
     'EBREAK':       {'type': 'I', 'funct3': '000', 'opcode': '1110011',
-                    'imm': 0b000000000001,
-                    'rs1': 0b00000,
-                    'rd': 0b00000},
+                    'imm': '000000000001',
+                    'rs1': '00000',
+                    'rd': '00000'},
 
     'ADDIW':        {'type': 'I', 'funct3': '000', 'opcode': '0011011',
                     'imm': 'Enter the first number to add (-2048 to 2047): ',
@@ -222,6 +222,11 @@ while True:
     instr = input("Enter the RISC-V instruction (or 'done' to finish): ").upper()
     if instr == 'DONE':
         window.destroy()
+        break
+
+    if instr == 'ALL INSTRUCTIONS':
+        window.destroy()
+        instructions, instructionname = complete_test(instruction_set, instructions, instructionname)
         break
 
     if instr not in instruction_set:
