@@ -1,7 +1,6 @@
 module cpuCore_tb #(
     parameter XLEN = 64,
     parameter INSTRUCTION_LENGTH = XLEN/2)
-
 ();
 
 logic clk = 0;
