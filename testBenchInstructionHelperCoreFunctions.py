@@ -121,9 +121,13 @@ def complete_test(instruction_set, instructions, instructionname):
 
         instructionname.append(name)
 
-        rd = idx % total_regs
-        rs1 = (idx + 1) % total_regs
-        rs2 = (idx + 2) % total_regs
+        rs1 = idx % total_regs
+        rs2 = (idx + 1) % total_regs
+        rd = (idx + 2) % total_regs
+
+        if (rd == 0):
+            rd = 1
+
         imm = 1
 
         opcode = details['opcode']
