@@ -87,7 +87,7 @@ enum {ALU, DATA_MEM} WRITEBACK_DATA_SEL_E; // to select the source of write data
 
 always_comb begin : decoder
 
-    // default all control signals to 0    
+    // default all control signals to 0
     alu_enable = 0;
     alu_sel = 0;
     alu_shift_amt = '0;
@@ -515,12 +515,22 @@ always_comb begin : decoder
             alu_sel = ADD;
             alu_data_in_a = rf_read_data1;
             alu_data_in_b = 0;
-            
+
+            if (instruction[INSTRUCTION_LENGTH - 1 : INSTRUCTION_LENGTH - 4] == 4'b1000) begin
+
+                // TSO Fence
+
+            end
+            else begin
+
+                // Normal Fence
+
+            end
         end
         
-        ECB: begin //Not required in current implementation, only useful when running an OS
+        ECB: begin // Cannot be implemented in current unprivileged design
 
-            if(instruction[INSTRUCTION_LENGTH - 1:INSTRUCTION_LENGTH - FUNCT12] == 12'b000000000000) begin //ECALL: System call
+            if(instruction[INSTRUCTION_LENGTH - 1:INSTRUCTION_LENGTH - FUNCT12] == 12'b000000000000) begin // ECALL: System call
 
                 // NOP since instruction is not implemented
                 alu_enable = 1;
@@ -542,7 +552,7 @@ always_comb begin : decoder
 
             end
 
-            if(instruction[INSTRUCTION_LENGTH - 1:INSTRUCTION_LENGTH - FUNCT12] == 12'b000000000001) begin //EBREAK: Debugging breakpoint
+            if(instruction[INSTRUCTION_LENGTH - 1:INSTRUCTION_LENGTH - FUNCT12] == 12'b000000000001) begin // EBREAK: Debugging breakpoint
 
                 // NOP since instruction is not implemented
                 alu_enable = 1;

@@ -119,7 +119,6 @@ always_ff @(posedge(clk)) begin : fetch_to_decode_ff
         // stall decode stage if f_to_d_enable_ff is deasserted and it was asserted the previous cycle
         if (f_to_d_enable_ff || !f_to_d_enable_ff_prev) begin
             
-            // PC_d[DECODE] <= PC[FETCH];
             instruction_d[DECODE] <= instruction;
 
         end

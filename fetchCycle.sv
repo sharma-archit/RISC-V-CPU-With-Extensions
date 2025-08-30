@@ -4,16 +4,16 @@ module fetchCycle #(
 (   
     input clk,
     input rst,
-    input  [XLEN - 1:0] PC_in,
+    input  [XLEN - 1:0] PC_in, // From Decode
     output logic [XLEN - 1:0] PC_out,
     output [INSTRUCTION_LENGTH - 1:0] instruction,
-    // debug ports to write into instruction memory during testing
+    // Debug ports to write into instruction memory during testing
     input dbg_wr_en,
     input [XLEN - 1:0] dbg_addr,
     input [INSTRUCTION_LENGTH - 1:0] dbg_instr
 );
 
-logic count_start; //Force PC to start incrementing after PC = 0 for only one clock cycle starting at the first rising edge after reset deasserted 
+logic count_start; // Force PC to start incrementing after PC = 0 for only one clock cycle starting at the first rising edge after reset deasserted
 
 always_ff @(posedge clk) begin
 
@@ -26,12 +26,11 @@ always_ff @(posedge clk) begin
     else begin
 
         count_start <= '1;
+        PC_out <= count_start ? PC_in + 4 : PC_in;
         
     end
     
 end
-
-assign PC_out = count_start ? PC_in + 4 : '0;
 
 
 instructionMemory instruction_memory (

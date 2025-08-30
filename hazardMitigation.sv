@@ -24,7 +24,6 @@ module hazardMitigation #(
     input logic [XLEN - 1:0] dec_dm_write_data,
     input logic [XLEN - 1:0] dm_data_bypass,
 
-
     //Signals to go to the pipeline register
     output logic [XLEN - 1:0] alu_data_in_a,
     output logic [XLEN - 1:0] alu_data_in_b,
@@ -32,10 +31,10 @@ module hazardMitigation #(
     output logic [XLEN - 1:0] jbl_data_in2,
     output logic [XLEN - 1:0] jbl_address_in,
     output logic [XLEN - 1:0] dm_write_data,
-    
+
     // pipeline flop stall signals
     output logic f_to_d_enable_ff, // fetch to decode ff enable
-    output logic d_to_e_enable_ff // decode to execute ff enable 
+    output logic d_to_e_enable_ff // decode to execute ff enable
 );
 
 logic [1:0] [1:0] pipeline_forward_sel; // data fwd source mux select
@@ -68,7 +67,7 @@ always_ff @(posedge(clk)) begin : instr_shift_reg
 
     if (rst) begin
 
-        for (int i = 0; i < SHIFT_DEPTH-1; i = i+1) begin
+        for (int i = 0; i < SHIFT_DEPTH - 2; i = i + 1) begin
             
             instr_reg_info[i + 1] <= '0;
             
@@ -78,7 +77,7 @@ always_ff @(posedge(clk)) begin : instr_shift_reg
     else begin
 
         // cycle instructions 
-        for (int i = 0; i < SHIFT_DEPTH-1; i = i + 1) begin
+        for (int i = 0; i < SHIFT_DEPTH - 2; i = i + 1) begin
             
             instr_reg_info[i + 1].destination <= instr_reg_info[i].destination;
             instr_reg_info[i + 1].source1 <= instr_reg_info[i].source1;
