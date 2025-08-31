@@ -7,7 +7,9 @@ module decodeCycle #(
     parameter JAL_OFFSET_SIZE = 20,
     parameter LOAD_OFFSET = 12,
     parameter REGISTER_SIZE = 5,
-    parameter INSTRUCTION_LENGTH = XLEN/2)
+    parameter INSTRUCTION_LENGTH = XLEN/2,
+    parameter PREDECESSOR = 4,
+    parameter SUCCESSOR = 4)
 (   
     input clk, 
     input rst, 
@@ -75,6 +77,9 @@ logic [XLEN - 1:0] rf_read_data2;
 logic [REGISTER_SIZE - 1:0] rf_read_addr1;
 logic [REGISTER_SIZE - 1:0] rf_read_addr2;
 
+logic [PREDECESSOR - 1:0] fence_pred;
+logic [SUCCESSOR - 1:0] fence_succ;
+
 regFile register_file (
     .clk(clk),
     .rst(rst),
@@ -107,7 +112,7 @@ jumpBranchLogic jump_branch_logic (
     .address_out(jbl_address_out)
     );
 
-hazardMitigation hazard_mitigation (
+pipelineControl pipeline_control (
     .dec_alu_data_in_a(dec_alu_data_in_a),
     .dec_alu_data_in_b(dec_alu_data_in_b),
     .dec_jbl_data_in1(dec_jbl_data_in1),

@@ -3,8 +3,8 @@
 
 This project is built upon my previous 32-bit RISC-V CPU project. The goal of this project is to implement all of the ratified RISC-V ISA extensions as of version 20240411:
 
-- RV64I Base Integer Instruction Set  (**Implemented** ✅ | **Simulating**  ⬅️)
-- Zifencei Extension for Instruction-Fetch Fence (WIP)
+- RV64I Base Integer Instruction Set  (**Implemented** ✅ | **Simulating** ✅)
+- Zifencei Extension for Instruction-Fetch Fence (**Implementing** ⬅️)
 - Zicsr Extension for Control and Status Register (CSR) Instructions (WIP)
 - Zicntr and Zihpm Extensions for Counters (WIP)
 - Zihintntl Extension for Non-Temporal Locality Hints (WIP)

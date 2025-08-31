@@ -1,20 +1,23 @@
-module hazardMitigation #(
+module pipelineControl #(
     parameter XLEN = 64,
     parameter REGISTER_SIZE = 5,
-    parameter SHIFT_DEPTH = 3,  // current and previous two instructions
-    parameter INSTRUCTION_LENGTH = XLEN/2)
+    parameter SHIFT_DEPTH = 3,  // Current and previous two instructions
+    parameter INSTRUCTION_LENGTH = XLEN/2,
+    parameter PREDECESSOR = 4,
+    parameter SUCCESSOR = 4,
+    parameter OPCODE = 7)
 (
     input clk,
     input rst,
     input [INSTRUCTION_LENGTH - 1:0] instruction,
-    input [REGISTER_SIZE-1:0] destination_reg,
-    input [REGISTER_SIZE-1:0] source_reg1,
-    input [REGISTER_SIZE-1:0] source_reg2,
+    input [REGISTER_SIZE - 1:0] destination_reg,
+    input [REGISTER_SIZE - 1:0] source_reg1,
+    input [REGISTER_SIZE - 1:0] source_reg2,
     input dm_read_enable,
     input dm_write_enable,
     input [XLEN - 1:0] dm_read_data,
 
-    //Signals coming from the instruction decoder
+    // Signals coming from the instruction decoder
     input logic [XLEN - 1:0] dec_alu_data_in_a,
     input logic [XLEN - 1:0] dec_alu_data_in_b,
     input logic [XLEN - 1:0] alu_data_out,
@@ -23,8 +26,10 @@ module hazardMitigation #(
     input logic [XLEN - 1:0] dec_jbl_address_in,
     input logic [XLEN - 1:0] dec_dm_write_data,
     input logic [XLEN - 1:0] dm_data_bypass,
+    input logic [PREDECESSOR - 1:0] fence_pred,
+    input logic [SUCCESSOR - 1:0] fence_succ,
 
-    //Signals to go to the pipeline register
+    // Signals to go to the pipeline register
     output logic [XLEN - 1:0] alu_data_in_a,
     output logic [XLEN - 1:0] alu_data_in_b,
     output logic [XLEN - 1:0] jbl_data_in1,
@@ -32,12 +37,15 @@ module hazardMitigation #(
     output logic [XLEN - 1:0] jbl_address_in,
     output logic [XLEN - 1:0] dm_write_data,
 
-    // pipeline flop stall signals
-    output logic f_to_d_enable_ff, // fetch to decode ff enable
-    output logic d_to_e_enable_ff // decode to execute ff enable
+    // Pipeline flop stall signals
+    output logic f_to_d_enable_ff, // Fetch to decode ff enable
+    output logic d_to_e_enable_ff // Decode to execute ff enable
 );
 
-logic [1:0] [1:0] pipeline_forward_sel; // data fwd source mux select
+logic [1:0] [1:0] pipeline_forward_sel; // Data fwd source mux select
+
+logic stall_trigger;
+int stall_counter;
 
 const logic A = 0;
 const logic B = 1;
@@ -45,43 +53,47 @@ const logic B = 1;
 enum logic [1:0] {DECODE_RF_OPERAND, MEM_ACCESS_DM_OPERAND, EXECUTE_ALU_OPERAND, MEM_ACCESS_ALU_OPERAND} DATA_FWD_SOURCE;
 
 typedef struct packed {
-    logic [REGISTER_SIZE-1:0] destination;
-    logic [REGISTER_SIZE-1:0] source1;
-    logic [REGISTER_SIZE-1:0] source2;
+    logic [REGISTER_SIZE - 1:0] destination;
+    logic [REGISTER_SIZE - 1:0] source1;
+    logic [REGISTER_SIZE - 1:0] source2;
+    logic [OPCODE - 1:0] instructions;
 } instr_registers_t;
 
-// internally storing dest/source registers for current and previous two instructions
+// Internally storing dest/source registers for current and previous two instructions
 // NOTE: instr_reg_info[0] = current instruction
 //       instr_reg_info[1] = previous instruction
 //       instr_reg_info[2] = previous previous instruction
-instr_registers_t [SHIFT_DEPTH-1:0] instr_reg_info;
+instr_registers_t [SHIFT_DEPTH - 1:0] instr_reg_info;
 
-logic [SHIFT_DEPTH-1:0] dm_read_enable_d;
-
-// push current instruction into shift reg
-assign instr_reg_info[0].destination = destination_reg;
-assign instr_reg_info[0].source1 = source_reg1;
-assign instr_reg_info[0].source2 = source_reg2;
+logic [SHIFT_DEPTH - 1:0] dm_read_enable_d;
 
 always_ff @(posedge(clk)) begin : instr_shift_reg
+
+    // Push current instruction into shift reg
+    instr_reg_info[0].destination <= destination_reg;
+    instr_reg_info[0].source1 <= source_reg1;
+    instr_reg_info[0].source2 <= source_reg2;
+    instr_reg_info[0].instructions <= instruction[OPCODE - 1:0];
 
     if (rst) begin
 
         for (int i = 0; i < SHIFT_DEPTH - 2; i = i + 1) begin
             
-            instr_reg_info[i + 1] <= '0;
+            instr_reg_info[i] <= '0;
             
         end
 
     end
+
     else begin
 
-        // cycle instructions 
+        // Cycle instructions 
         for (int i = 0; i < SHIFT_DEPTH - 2; i = i + 1) begin
             
             instr_reg_info[i + 1].destination <= instr_reg_info[i].destination;
             instr_reg_info[i + 1].source1 <= instr_reg_info[i].source1;
             instr_reg_info[i + 1].source2 <= instr_reg_info[i].source2;
+            instr_reg_info[i + 1].instructions <= instr_reg_info[i].instructions;
             
         end
 
@@ -89,9 +101,9 @@ always_ff @(posedge(clk)) begin : instr_shift_reg
 
 end : instr_shift_reg
 
-assign dm_read_enable_d[0] = dm_read_enable;
-
 always_ff @(posedge(clk)) begin : load_check_shift_reg
+
+    dm_read_enable_d[0] <= dm_read_enable;
 
     if (rst) begin
 
@@ -116,44 +128,40 @@ end : load_check_shift_reg
 
 always_comb begin : pipeline_data_hazard_detection
 
-    f_to_d_enable_ff = 1;
-    d_to_e_enable_ff = 1;
-
     pipeline_forward_sel[A] = DECODE_RF_OPERAND;
     pipeline_forward_sel[B] = DECODE_RF_OPERAND;
 
-    // need to check if the current instruction has a data hazard with the previous two instructions in the pipeline
-    for (int i = 1; i < 3 ; i=i+1) begin
+    // Need to check if the current instruction has a data hazard with the previous two instructions in the pipeline
+    for (int i = 1; i < 3 ; i = i + 1) begin
     
-        // if a past instruction's destination reg is source1 reg for the current instruction
+        // If a past instruction's destination reg is source1 reg for the current instruction
         if (instr_reg_info[i].destination == instr_reg_info[0].source1 && instr_reg_info[i].destination !== 0 && instr_reg_info[0].source1 !== 0) begin
             
-            // for previous load instructions
+            // For previous load instructions
             if (dm_read_enable_d[i]) begin : load_instr_A
 
-                if (i == 1) begin //conflicting load instruction is currently in execute cycle
+                if (i == 1) begin // Conflicting load instruction is currently in execute cycle
 
-                    // order a stall since the previous load instruction must be in the memory access cycle to produce the operand that will be forwarded to the decode stage
-                    f_to_d_enable_ff = '0;
-                    d_to_e_enable_ff = '0;
+                    // Order a stall since the previous load instruction must be in the memory access cycle to produce the operand that will be forwarded to the decode stage
+                    stall_trigger = 1;
 
                 end
-                else if (i == 2) begin //conflicting load instruction is currently in memory access cycle
+                else if (i == 2) begin // Conflicting load instruction is currently in memory access cycle
 
                     pipeline_forward_sel[A] = MEM_ACCESS_DM_OPERAND;
 
                 end
             end : load_instr_A
             
-            // for non-load previous instructions
+            // For non-load previous instructions
             else begin : non_load_instr_A
 
                 if (i == 1) begin
-                    //forward alu_data_out from execute cycle to decode cycle
+                    // Forward alu_data_out from execute cycle to decode cycle
                     pipeline_forward_sel[A] = EXECUTE_ALU_OPERAND;
                 end
                 else begin
-                //forward alu_data_out from memory access cycle to decode cycle
+                // Forward alu_data_out from memory access cycle to decode cycle
                 pipeline_forward_sel[A] = MEM_ACCESS_ALU_OPERAND;
 
                 end
@@ -162,35 +170,34 @@ always_comb begin : pipeline_data_hazard_detection
 
         end
 
-        // if a past instruction's destination reg is source2 reg for the current instruction
+        // If a past instruction's destination reg is source2 reg for the current instruction
         if (instr_reg_info[i].destination == instr_reg_info[0].source2 && instr_reg_info[i].destination !== 0 && instr_reg_info[0].source2 !== 0) begin
             
-            // for previous load instructions
+            // For previous load instructions
             if (dm_read_enable_d[i]) begin : load_instr_B
 
-                if (i == 1) begin //conflicting load instruction is currently in execute cycle
+                if (i == 1) begin // Conflicting load instruction is currently in execute cycle
 
-                    // order a stall since the previous load instruction must be in the memory access cycle to produce the operand that will be forwarded to the decode stage
-                    f_to_d_enable_ff = '0;
-                    d_to_e_enable_ff = '0;
+                    // Order a stall since the previous load instruction must be in the memory access cycle to produce the operand that will be forwarded to the decode stage
+                    stall_trigger = 1;
 
                 end
-                else if (i == 2) begin //conflicting load instruction is currently in memory access cycle
+                else if (i == 2) begin // Conflicting load instruction is currently in memory access cycle
 
                     pipeline_forward_sel[B] = MEM_ACCESS_DM_OPERAND;
 
                 end
             end : load_instr_B
             
-            // for non-load previous instructions
+            // For non-load previous instructions
             else begin : non_load_instr_B
 
                 if (i == 1) begin
-                    //forward alu_data_out from execute cycle to decode cycle
+                    // Forward alu_data_out from execute cycle to decode cycle
                     pipeline_forward_sel[B] = EXECUTE_ALU_OPERAND;
                 end
                 else if (i == 2) begin
-                //forward alu_data_out from memory access cycle to decode cycle
+                // Forward alu_data_out from memory access cycle to decode cycle
                 pipeline_forward_sel[B] = MEM_ACCESS_ALU_OPERAND;
 
                 end
@@ -201,7 +208,7 @@ always_comb begin : pipeline_data_hazard_detection
 
     end
 
-    //Operand forwarding for alu_in_a
+    // Operand forwarding for alu_in_a
     case (pipeline_forward_sel[A])
 
         MEM_ACCESS_DM_OPERAND: begin
@@ -267,10 +274,10 @@ always_comb begin : pipeline_data_hazard_detection
         
     endcase
 
-    //Operand forwarding for alu_in_b/store data source
+    // Operand forwarding for alu_in_b/store data source
     case (pipeline_forward_sel[B])
 
-        MEM_ACCESS_DM_OPERAND: begin //Forward operand from mem access cycle into ALU input a
+        MEM_ACCESS_DM_OPERAND: begin // Forward operand from mem access cycle into ALU input a
 
             alu_data_in_b = dm_read_data;
             dm_write_data = dm_read_data;
@@ -279,11 +286,11 @@ always_comb begin : pipeline_data_hazard_detection
             
         end
         
-        EXECUTE_ALU_OPERAND: begin //Forward operand from execute cycle
+        EXECUTE_ALU_OPERAND: begin // Forward operand from execute cycle
 
             jbl_data_in2 = alu_data_out;
             
-            if (dm_write_enable) begin // if instruction is store
+            if (dm_write_enable) begin // If instruction is store
                 
                 alu_data_in_b = dec_alu_data_in_b;
                 dm_write_data = alu_data_out;
@@ -298,11 +305,11 @@ always_comb begin : pipeline_data_hazard_detection
             
         end
         
-        MEM_ACCESS_ALU_OPERAND: begin //Forward operand from mem access cycle
+        MEM_ACCESS_ALU_OPERAND: begin // Forward operand from mem access cycle
             
             jbl_data_in2 = dm_data_bypass;
 
-            if (dm_write_enable) begin // if instruction is store
+            if (dm_write_enable) begin // If instruction is store
                 
                 alu_data_in_b = dec_alu_data_in_b;
                 dm_write_data = dm_data_bypass;
@@ -328,5 +335,42 @@ always_comb begin : pipeline_data_hazard_detection
     endcase
 
 end : pipeline_data_hazard_detection
+
+always_ff @(posedge(clk)) begin : pipeline_stalling
+
+    if (rst) begin
+
+        f_to_d_enable_ff <= 1'b1;
+        d_to_e_enable_ff <= 1'b1;
+        stall_trigger = '0;
+        stall_counter <= '0;
+
+    end
+    else if (stall_trigger && stall_counter == 1) begin
+
+        for (int i = stall_counter; i < 0; i = i - 1) begin
+
+            f_to_d_enable_ff <= '0;
+            stall_counter <= stall_counter - 1;
+
+        end
+
+        stall_trigger = '0;
+    
+    end
+    else if (stall_trigger && stall_counter == 2) begin
+        for (int i = stall_counter; i < 0; i = i - 1) begin
+
+            f_to_d_enable_ff <= '0;
+            d_to_e_enable_ff <= '0;
+            stall_counter <= stall_counter - 1;
+        end
+    end
+
+end
+
+always_comb begin : fence_handling
+    
+end
 
 endmodule

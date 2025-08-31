@@ -11,7 +11,7 @@ module cpuCore #(
 (
     input clk,
     input rst,
-    // debug ports to write instruction memory for testing
+    // Debug ports to write instruction memory for testing
     input dbg_wr_en,
     input [XLEN - 1:0] dbg_addr,
     input [INSTRUCTION_LENGTH - 1:0] dbg_instr
@@ -22,8 +22,8 @@ const logic B = 1;
 enum logic [2:0] {FETCH, DECODE, EXECUTE, MEMORY_ACCESS, WRITEBACK} CPU_PIPELINE_STAGES;
 enum logic [1:0] {DECODE_RF_OPERAND, MEM_ACCESS_DM_OPERAND, EXECUTE_ALU_OPERAND, MEM_ACCESS_ALU_OPERAND} DATA_FWD_SOURCE;
 
-// combinational signals
-logic [XLEN - 1:0] instruction;
+// Combinational signals
+logic [INSTRUCTION_LENGTH - 1:0] instruction;
 logic [DECODE:0] [XLEN - 1:0] PC;
 
 logic alu_enable;
@@ -48,8 +48,8 @@ logic [2:0] dm_load_type;
 logic [XLEN - 1:0] dm_read_data;
 logic [XLEN - 1:0] dm_data_bypass;
 
-// pipelined signals
-logic [DECODE:0] [XLEN - 1:0] instruction_d;
+// Pipelined signals
+logic [DECODE:0] [INSTRUCTION_LENGTH - 1:0] instruction_d;
 logic [WRITEBACK:0] [XLEN - 1:0] PC_d;
 
 logic [EXECUTE:0] alu_enable_d;
@@ -72,9 +72,9 @@ logic [MEMORY_ACCESS:0] [XLEN - 1:0] dm_write_data_d;
 logic [MEMORY_ACCESS:0] [2:0] dm_load_type_d;
 logic [MEMORY_ACCESS:0] [XLEN - 1:0] dm_data_bypass_d;
 
-// data hazard control signals
-logic f_to_d_enable_ff, f_to_d_enable_ff_prev;
-logic d_to_e_enable_ff, d_to_e_enable_ff_prev;
+// Data hazard control signals
+logic f_to_d_enable_ff;
+logic d_to_e_enable_ff;
 
 logic [XLEN - 1:0] dec_dm_write_data;
 
@@ -105,23 +105,15 @@ always_ff @(posedge(clk)) begin : fetch_to_decode_ff
 
     if (rst) begin
 
-        f_to_d_enable_ff_prev <= '0;
         PC_d[DECODE] <= '0;
         instruction_d[DECODE] <= '0;
 
     end
-    
-    else begin
 
-        f_to_d_enable_ff_prev <= f_to_d_enable_ff;
+    else if (f_to_d_enable_ff) begin // Stall decode stage if f_to_d_enable_ff is deasserted
+
         PC_d[DECODE] <= PC[FETCH];
-
-        // stall decode stage if f_to_d_enable_ff is deasserted and it was asserted the previous cycle
-        if (f_to_d_enable_ff || !f_to_d_enable_ff_prev) begin
-            
-            instruction_d[DECODE] <= instruction;
-
-        end
+        instruction_d[DECODE] <= instruction;
 
     end
 
@@ -168,7 +160,6 @@ always_ff @(posedge(clk)) begin : decode_to_execute_ff
 
     if (rst) begin
 
-        d_to_e_enable_ff_prev <= '0;
         alu_enable_d[EXECUTE] <= '0;
         alu_sel_d[EXECUTE] <= '0;
         alu_shift_amt_d[EXECUTE] <= '0;
@@ -184,29 +175,22 @@ always_ff @(posedge(clk)) begin : decode_to_execute_ff
 
     end
     
-    else begin
+    else if (d_to_e_enable_ff) begin // Stall execute stage if d_to_e_enable_ff is deasserted
 
-        d_to_e_enable_ff_prev <= d_to_e_enable_ff;
+        alu_enable_d[EXECUTE] <= alu_enable;
+        alu_sel_d[EXECUTE] <= alu_sel;
+        alu_shift_amt_d[EXECUTE] <= alu_shift_amt;
+        alu_data_in_a_d[EXECUTE] <= alu_data_in_a;
+        alu_data_in_b_d[EXECUTE] <= alu_data_in_b;
 
-        // stall execute stage if d_to_e_enable_ff is deasserted and it was asserted the previous cycle
-        if (d_to_e_enable_ff || !d_to_e_enable_ff_prev) begin
+        rf_write_enable_d[EXECUTE] <= rf_write_enable;
+        rf_write_addr_d[EXECUTE] <= rf_write_addr;
+        rf_write_data_sel_d[EXECUTE] <= rf_write_data_sel;
 
-            alu_enable_d[EXECUTE] <= alu_enable;
-            alu_sel_d[EXECUTE] <= alu_sel;
-            alu_shift_amt_d[EXECUTE] <= alu_shift_amt;
-            alu_data_in_a_d[EXECUTE] <= alu_data_in_a;
-            alu_data_in_b_d[EXECUTE] <= alu_data_in_b;
-
-            rf_write_enable_d[EXECUTE] <= rf_write_enable;
-            rf_write_addr_d[EXECUTE] <= rf_write_addr;
-            rf_write_data_sel_d[EXECUTE] <= rf_write_data_sel;
-
-            dm_read_enable_d[EXECUTE] <= dm_read_enable;
-            dm_write_enable_d[EXECUTE] <= dm_write_enable;
-            dm_write_data_d[EXECUTE] <= dm_write_data;
-            dm_load_type_d[EXECUTE] <= dm_load_type;
-
-        end
+        dm_read_enable_d[EXECUTE] <= dm_read_enable;
+        dm_write_enable_d[EXECUTE] <= dm_write_enable;
+        dm_write_data_d[EXECUTE] <= dm_write_data;
+        dm_load_type_d[EXECUTE] <= dm_load_type;
 
     end
 
@@ -243,7 +227,7 @@ always_ff @(posedge(clk)) begin : execute_to_memaccess_ff
     
         alu_data_out_d[MEMORY_ACCESS] <= alu_data_out;
 
-        //All signals below simply flopped to next stage
+        // All signals below simply flopped to next stage
 
         rf_write_enable_d[MEMORY_ACCESS] <= rf_write_enable_d[EXECUTE];
         rf_write_addr_d[MEMORY_ACCESS] <= rf_write_addr_d[EXECUTE];
