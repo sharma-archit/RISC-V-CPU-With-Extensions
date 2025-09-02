@@ -15,6 +15,8 @@ module decodeCycle #(
     input rst, 
     
     input logic [INSTRUCTION_LENGTH - 1:0] instruction,
+    input logic [INSTRUCTION_LENGTH - 1:0] instruction_direct,
+    input logic [INSTRUCTION_LENGTH - 1:0] next_instruction,
     input logic [XLEN - 1:0] PC_in,
     output logic [XLEN - 1:0] PC_out,
 
@@ -77,12 +79,13 @@ logic [XLEN - 1:0] rf_read_data2;
 logic [REGISTER_SIZE - 1:0] rf_read_addr1;
 logic [REGISTER_SIZE - 1:0] rf_read_addr2;
 
+logic dec_dm_read_enable;
+logic dec_dm_write_enable;
+
 logic [PREDECESSOR - 1:0] fence_pred;
 logic [SUCCESSOR - 1:0] fence_succ;
 
 regFile register_file (
-    .clk(clk),
-    .rst(rst),
     .write_enable(rf_writeback_enable),
     .read_enable1(rf_read_enable1),
     .read_enable2(rf_read_enable2),
@@ -91,8 +94,8 @@ regFile register_file (
     .write_addr(rf_writeback_addr),
     .write_data(rf_writeback_data),
     .read_data1(rf_read_data1),
-    .read_data2(rf_read_data2)
-    );
+    .read_data2(rf_read_data2),
+    .*);
 
 instructionDecoder instruction_decoder (
     .alu_data_in_a(dec_alu_data_in_a),

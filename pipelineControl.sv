@@ -10,6 +10,8 @@ module pipelineControl #(
     input clk,
     input rst,
     input [INSTRUCTION_LENGTH - 1:0] instruction,
+    input [INSTRUCTION_LENGTH - 1:0] instruction_direct,
+    input [INSTRUCTION_LENGTH - 1:0] next_instruction,
     input [REGISTER_SIZE - 1:0] destination_reg,
     input [REGISTER_SIZE - 1:0] source_reg1,
     input [REGISTER_SIZE - 1:0] source_reg2,
@@ -26,8 +28,8 @@ module pipelineControl #(
     input logic [XLEN - 1:0] dec_jbl_address_in,
     input logic [XLEN - 1:0] dec_dm_write_data,
     input logic [XLEN - 1:0] dm_data_bypass,
-    input logic [PREDECESSOR - 1:0] fence_pred,
-    input logic [SUCCESSOR - 1:0] fence_succ,
+    input logic [PREDECESSOR - 1:0] fence_pred, // Predecessor is instructions after decode cycle
+    input logic [SUCCESSOR - 1:0] fence_succ, // Successor is instructions before decode cycle
 
     // Signals to go to the pipeline register
     output logic [XLEN - 1:0] alu_data_in_a,
@@ -44,36 +46,40 @@ module pipelineControl #(
 
 logic [1:0] [1:0] pipeline_forward_sel; // Data fwd source mux select
 
-logic stall_trigger;
-int stall_counter;
-
 const logic A = 0;
 const logic B = 1;
-
-enum logic [1:0] {DECODE_RF_OPERAND, MEM_ACCESS_DM_OPERAND, EXECUTE_ALU_OPERAND, MEM_ACCESS_ALU_OPERAND} DATA_FWD_SOURCE;
 
 typedef struct packed {
     logic [REGISTER_SIZE - 1:0] destination;
     logic [REGISTER_SIZE - 1:0] source1;
     logic [REGISTER_SIZE - 1:0] source2;
-    logic [OPCODE - 1:0] instructions;
 } instr_registers_t;
 
 // Internally storing dest/source registers for current and previous two instructions
-// NOTE: instr_reg_info[0] = current instruction
-//       instr_reg_info[1] = previous instruction
-//       instr_reg_info[2] = previous previous instruction
+// NOTE: instr_reg_info[0] = current instruction (in decode cycle)
+//       instr_reg_info[1] = previous instruction (in execute cycle)
+//       instr_reg_info[2] = previous previous instruction (in memory writeback cycle)
 instr_registers_t [SHIFT_DEPTH - 1:0] instr_reg_info;
 
 logic [SHIFT_DEPTH - 1:0] dm_read_enable_d;
 
-always_ff @(posedge(clk)) begin : instr_shift_reg
+logic stall_trigger;
+int stall_counter;
+
+logic [SHIFT_DEPTH - 1:0] before_current_instruction;
+logic [SHIFT_DEPTH - 1:0] after_current_instruction;
+
+logic [SHIFT_DEPTH - 1:0] [OPCODE - 1:0] predecessor_opcodes;
+logic [SHIFT_DEPTH - 1:0] [OPCODE - 1:0] successor_opcodes;
+
+enum logic [1:0] {DECODE_RF_OPERAND, MEM_ACCESS_DM_OPERAND, EXECUTE_ALU_OPERAND, MEM_ACCESS_ALU_OPERAND} DATA_FWD_SOURCE;
+
+always_ff @(posedge(clk)) begin : reg_info_shift_reg
 
     // Push current instruction into shift reg
     instr_reg_info[0].destination <= destination_reg;
     instr_reg_info[0].source1 <= source_reg1;
     instr_reg_info[0].source2 <= source_reg2;
-    instr_reg_info[0].instructions <= instruction[OPCODE - 1:0];
 
     if (rst) begin
 
@@ -93,21 +99,20 @@ always_ff @(posedge(clk)) begin : instr_shift_reg
             instr_reg_info[i + 1].destination <= instr_reg_info[i].destination;
             instr_reg_info[i + 1].source1 <= instr_reg_info[i].source1;
             instr_reg_info[i + 1].source2 <= instr_reg_info[i].source2;
-            instr_reg_info[i + 1].instructions <= instr_reg_info[i].instructions;
             
         end
 
     end
 
-end : instr_shift_reg
+end : reg_info_shift_reg
 
-always_ff @(posedge(clk)) begin : load_check_shift_reg
+always_ff @(posedge(clk)) begin : load_enable_shift_reg
 
     dm_read_enable_d[0] <= dm_read_enable;
 
     if (rst) begin
 
-        for (int i = 0; i < SHIFT_DEPTH-1; i = i+1) begin
+        for (int i = 0; i < SHIFT_DEPTH - 1; i = i + 1) begin
             
             dm_read_enable_d[i + 1] <= '0;
             
@@ -116,7 +121,7 @@ always_ff @(posedge(clk)) begin : load_check_shift_reg
     end
     else begin
 
-        for (int i = 0; i < SHIFT_DEPTH-1; i = i+1) begin
+        for (int i = 0; i < SHIFT_DEPTH - 1; i = i + 1) begin
             
             dm_read_enable_d[i + 1] <= dm_read_enable_d[i];
             
@@ -124,7 +129,7 @@ always_ff @(posedge(clk)) begin : load_check_shift_reg
     
     end
 
-end : load_check_shift_reg
+end : load_enable_shift_reg
 
 always_comb begin : pipeline_data_hazard_detection
 
@@ -144,6 +149,7 @@ always_comb begin : pipeline_data_hazard_detection
 
                     // Order a stall since the previous load instruction must be in the memory access cycle to produce the operand that will be forwarded to the decode stage
                     stall_trigger = 1;
+                    stall_counter = 2;
 
                 end
                 else if (i == 2) begin // Conflicting load instruction is currently in memory access cycle
@@ -180,6 +186,7 @@ always_comb begin : pipeline_data_hazard_detection
 
                     // Order a stall since the previous load instruction must be in the memory access cycle to produce the operand that will be forwarded to the decode stage
                     stall_trigger = 1;
+                    stall_counter = 2;
 
                 end
                 else if (i == 2) begin // Conflicting load instruction is currently in memory access cycle
@@ -343,34 +350,116 @@ always_ff @(posedge(clk)) begin : pipeline_stalling
         f_to_d_enable_ff <= 1'b1;
         d_to_e_enable_ff <= 1'b1;
         stall_trigger = '0;
-        stall_counter <= '0;
+        stall_counter = '0;
 
     end
-    else if (stall_trigger && stall_counter == 1) begin
+    else if (stall_trigger && (stall_counter == 1)) begin
 
         for (int i = stall_counter; i < 0; i = i - 1) begin
 
             f_to_d_enable_ff <= '0;
-            stall_counter <= stall_counter - 1;
+            stall_counter = stall_counter - 1;
 
         end
 
         stall_trigger = '0;
     
     end
-    else if (stall_trigger && stall_counter == 2) begin
+    else if (stall_trigger && (stall_counter == 2)) begin
         for (int i = stall_counter; i < 0; i = i - 1) begin
 
             f_to_d_enable_ff <= '0;
             d_to_e_enable_ff <= '0;
-            stall_counter <= stall_counter - 1;
+            stall_counter = stall_counter - 1;
+
         end
+
     end
 
 end
 
+always_ff @(posedge(clk)) begin : address_opcodes_shift_reg
+
+    predecessor_opcodes[0] <= instruction[OPCODE - 1:0];
+    successor_opcodes[0] <= instruction[OPCODE - 1:0];
+    successor_opcodes[1] <= instruction_direct[OPCODE - 1:0];
+    successor_opcodes[2] <= next_instruction[OPCODE - 1:0];
+
+    if (rst) begin
+
+        for (int i = 0; i < SHIFT_DEPTH - 1; i++) begin
+
+            predecessor_opcodes[i + 1] <= '0;
+            successor_opcodes[i + 1] <= '0;
+
+        end
+
+    end
+    else begin
+
+        for (int i = 0; i < SHIFT_DEPTH - 1; i++) begin
+
+            predecessor_opcodes[i + 1] <= predecessor_opcodes[i];
+
+        end
+
+    end
+
+end : address_opcodes_shift_reg
+
 always_comb begin : fence_handling
-    
+
+    case (fence_succ) // Which successor instruction to complete? (Input, Output, Read, or Write)
+
+        (fence_succ[0] || fence_succ[2]): begin // Memory writes or outputs
+
+            for (logic [SHIFT_DEPTH - 1:0] i = '0; i < SHIFT_DEPTH - 1; i++) begin
+
+                if (successor_opcodes[i] == 7'b0100011) begin
+
+                    before_current_instruction = i;
+
+                end
+
+            end
+
+        end
+
+        (fence_succ[1] || fence_succ[3]): begin // Memory reads or inputs
+
+            for (logic [SHIFT_DEPTH - 1:0] i = '0; i < SHIFT_DEPTH - 1; i++) begin
+
+                if (successor_opcodes == 7'b0000011) begin
+
+                    before_current_instruction = i;
+
+                end
+            end
+            
+        end
+
+        default: begin
+            
+        end
+
+    endcase
+
+    case (fence_pred) // Which predecessor instruction to stall? (Input, Output, Read, or Write)
+
+        (fence_pred[0] || fence_pred[2]): begin // Check for memory writes or outputs
+            
+        end
+
+        (fence_pred[1] || fence_pred[3]): begin // Check for memory reads or inputs
+            
+        end
+
+        default: begin
+            
+        end
+
+    endcase
+
 end
 
 endmodule

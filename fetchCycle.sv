@@ -7,6 +7,7 @@ module fetchCycle #(
     input  [XLEN - 1:0] PC_in, // From Decode
     output logic [XLEN - 1:0] PC_out,
     output [INSTRUCTION_LENGTH - 1:0] instruction,
+    output [INSTRUCTION_LENGTH - 1:0] next_instruction,
     // Debug ports to write into instruction memory during testing
     input dbg_wr_en,
     input [XLEN - 1:0] dbg_addr,

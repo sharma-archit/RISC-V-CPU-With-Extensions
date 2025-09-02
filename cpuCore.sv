@@ -25,6 +25,7 @@ enum logic [1:0] {DECODE_RF_OPERAND, MEM_ACCESS_DM_OPERAND, EXECUTE_ALU_OPERAND,
 // Combinational signals
 logic [INSTRUCTION_LENGTH - 1:0] instruction;
 logic [DECODE:0] [XLEN - 1:0] PC;
+logic [INSTRUCTION_LENGTH - 1:0] next_instruction;
 
 logic alu_enable;
 logic [ALU_SEL_SIZE - 1:0] alu_sel;
@@ -125,6 +126,7 @@ decodeCycle decode_cycle (
     .clk(clk),
     .rst(rst),
     .instruction(instruction_d[DECODE]),
+    .instruction_direct(instruction),
     .PC_in(PC_d[DECODE]),
     .PC_out(PC[DECODE]),
 

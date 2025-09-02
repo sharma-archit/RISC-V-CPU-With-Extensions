@@ -74,7 +74,7 @@ const logic [6:0] JAL     = 7'b1101111;
 const logic [6:0] JALR    = 7'b1100111;
 // Instruction groups
 const logic [6:0] BRANCH  = 7'b1100011;
-const logic [6:0] LOAD    =  7'b0000011;
+const logic [6:0] LOAD    = 7'b0000011;
 const logic [6:0] STORE   = 7'b0100011;
 const logic [6:0] IRII    = 7'b0010011;
 const logic [6:0] IRRO    = 7'b0110011;
@@ -85,7 +85,7 @@ const logic [6:0] IRROW   = 7'b0111011;
 const logic [6:0] LOADW   = 7'b0000011;
 const logic [6:0] STOREW  = 7'b0100011;
 
-enum {ADD, SUB, SLT, SLTU, ANDI, ORI, XORI, SLL, SRL, SRA, ALU_LUI, ALU_AUIPC, ADDW, SUBW, SLLW, SRLW, SRAW} ALU_OP_E; // ANDI, ORI, and XORI are used to avoid using SystemVerilog keywords
+enum {ADD, SUB, SLT, SLTU, ANDI, ORI, XORI, SLL, SRL, SRA, ALU_LUI, ALU_AUIPC, ADDW, SUBW, SLLW, SRLW, SRAW} ALU_OP_E; // ANDI, ORI, and XORI are used to avoid SystemVerilog keywords
 enum {JBL_JAL, JBL_JALR, BEQ, BNE, BLT, BGE, BLTU, BGEU} JBL_OP_E;
 enum {LOAD_B, LOAD_H, LOAD_W, LOAD_D, LOAD_BU, LOAD_HU, LOAD_WU} LOAD_OP_E; // To size load data in the mem_access cycle
 enum {ALU, DATA_MEM} WRITEBACK_DATA_SEL_E; // To select the source of write data in the writeback cycle
@@ -500,26 +500,8 @@ always_comb begin : decoder
             end
 
         end
-        
+
         FENCE: begin
-
-            // NOP since instruction is not implemented
-            alu_enable = 1;
-
-            rf_read_enable1 = 1;
-            rf_read_addr1 = 0;
-
-            rf_write_enable = 1;
-            rf_write_addr = 0;
-            rf_write_data_sel = ALU;
-
-            destination_reg = 0;
-            source_reg1 = 0;
-            source_reg2 = 'x;
-
-            alu_sel = ADD;
-            alu_data_in_a = rf_read_data1;
-            alu_data_in_b = 0;
 
             if (instruction[INSTRUCTION_LENGTH - 1 : INSTRUCTION_LENGTH - FENCE_FM] == 4'b1000) begin // TSO Fence
 
@@ -528,8 +510,10 @@ always_comb begin : decoder
 
                 fence_pred = instruction[INSTRUCTION_LENGTH - FENCE_FM - 1: INSTRUCTION_LENGTH - FENCE_FM - PREDECESSOR];
                 fence_succ = instruction[INSTRUCTION_LENGTH - FENCE_FM - PREDECESSOR - 1: INSTRUCTION_LENGTH - FENCE_FM - PREDECESSOR - SUCCESSOR];
+                // past_instructions = [1,2]
 
             end
+
         end
         
         ECB: begin // Cannot be implemented in current unprivileged design
