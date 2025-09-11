@@ -376,18 +376,13 @@ always_ff @(posedge(clk)) begin : pipeline_stalling
 
     end
 
-end
+end : pipeline_stalling
 
 always_ff @(posedge(clk)) begin : address_opcodes_shift_reg
 
-    predecessor_opcodes[0] <= instruction[OPCODE - 1:0];
-    successor_opcodes[0] <= instruction[OPCODE - 1:0];
-    successor_opcodes[1] <= instruction_direct[OPCODE - 1:0];
-    successor_opcodes[2] <= next_instruction[OPCODE - 1:0];
-
     if (rst) begin
 
-        for (int i = 0; i < SHIFT_DEPTH - 1; i++) begin
+        for (int i = 0; i < SHIFT_DEPTH - 2; i++) begin
 
             predecessor_opcodes[i + 1] <= '0;
             successor_opcodes[i + 1] <= '0;
@@ -397,7 +392,12 @@ always_ff @(posedge(clk)) begin : address_opcodes_shift_reg
     end
     else begin
 
-        for (int i = 0; i < SHIFT_DEPTH - 1; i++) begin
+        predecessor_opcodes[0] <= instruction[OPCODE - 1:0];
+        successor_opcodes[0] <= instruction[OPCODE - 1:0];
+        successor_opcodes[1] <= instruction_direct[OPCODE - 1:0];
+        successor_opcodes[2] <= next_instruction[OPCODE - 1:0];
+
+        for (int i = 0; i < SHIFT_DEPTH - 2; i++) begin
 
             predecessor_opcodes[i + 1] <= predecessor_opcodes[i];
 
@@ -413,7 +413,7 @@ always_comb begin : fence_handling
 
         (fence_succ[0] || fence_succ[2]): begin // Memory writes or outputs
 
-            for (logic [SHIFT_DEPTH - 1:0] i = '0; i < SHIFT_DEPTH - 1; i++) begin
+            for (logic [SHIFT_DEPTH - 1:0] i = '0; i < SHIFT_DEPTH; i++) begin
 
                 if (successor_opcodes[i] == 7'b0100011) begin
 
@@ -427,7 +427,7 @@ always_comb begin : fence_handling
 
         (fence_succ[1] || fence_succ[3]): begin // Memory reads or inputs
 
-            for (logic [SHIFT_DEPTH - 1:0] i = '0; i < SHIFT_DEPTH - 1; i++) begin
+            for (logic [SHIFT_DEPTH - 1:0] i = '0; i < SHIFT_DEPTH; i++) begin
 
                 if (successor_opcodes == 7'b0000011) begin
 
@@ -447,18 +447,48 @@ always_comb begin : fence_handling
     case (fence_pred) // Which predecessor instruction to stall? (Input, Output, Read, or Write)
 
         (fence_pred[0] || fence_pred[2]): begin // Check for memory writes or outputs
-            
+
+            for (logic [SHIFT_DEPTH - 1:0] i = '0; i < SHIFT_DEPTH; i++) begin
+
+                if (predecessor_opcodes == 7'b0100011) begin
+
+                    after_current_instruction = i;
+
+                end
+
+            end
+
         end
 
         (fence_pred[1] || fence_pred[3]): begin // Check for memory reads or inputs
-            
+
+            for (logic [SHIFT_DEPTH - 1:0] i = '0; i < SHIFT_DEPTH; i++) begin
+
+                if (predecessor_opcodes == 7'b0000011) begin
+
+                    after_current_instruction = i;
+
+                end
+
+            end
+
         end
 
         default: begin
-            
+
         end
 
     endcase
+
+    if (before_current_instruction + after_current_instruction == 2) begin // Successor instruction will not exit pipeline before predecessor enters decode
+
+        stall_counter = 1;
+
+    end else if (before_current_instruction + after_current_instruction < 2) begin
+
+        // Impossible; if the value is less than one then current instruction is not FENCE
+
+    end
 
 end
 
