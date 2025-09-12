@@ -355,25 +355,23 @@ always_ff @(posedge(clk)) begin : pipeline_stalling
     end
     else if (stall_trigger && (stall_counter == 1)) begin
 
-        for (int i = stall_counter; i < 0; i = i - 1) begin
-
             f_to_d_enable_ff <= '0;
             stall_counter = stall_counter - 1;
 
-        end
-
         stall_trigger = '0;
-    
+
     end
     else if (stall_trigger && (stall_counter == 2)) begin
-        for (int i = stall_counter; i < 0; i = i - 1) begin
 
             f_to_d_enable_ff <= '0;
             d_to_e_enable_ff <= '0;
             stall_counter = stall_counter - 1;
 
-        end
+    end
+    else if (stall_counter < 1) begin
 
+        stall_trigger = '0;
+        
     end
 
 end : pipeline_stalling
@@ -409,7 +407,7 @@ end : address_opcodes_shift_reg
 
 always_comb begin : fence_handling
 
-    case (fence_succ) // Which successor instruction to complete? (Input, Output, Read, or Write)
+    case (fence_succ) // How far before FENCE is the key instruction? (Input, Output, Read, or Write)
 
         (fence_succ[0] || fence_succ[2]): begin // Memory writes or outputs
 
@@ -444,7 +442,7 @@ always_comb begin : fence_handling
 
     endcase
 
-    case (fence_pred) // Which predecessor instruction to stall? (Input, Output, Read, or Write)
+    case (fence_pred) // How far after FENCE is the key instruction? (Input, Output, Read, or Write)
 
         (fence_pred[0] || fence_pred[2]): begin // Check for memory writes or outputs
 
@@ -482,6 +480,7 @@ always_comb begin : fence_handling
 
     if (before_current_instruction + after_current_instruction == 2) begin // Successor instruction will not exit pipeline before predecessor enters decode
 
+        stall_trigger = 1;
         stall_counter = 1;
 
     end else if (before_current_instruction + after_current_instruction < 2) begin
