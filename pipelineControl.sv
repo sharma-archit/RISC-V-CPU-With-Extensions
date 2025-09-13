@@ -5,7 +5,8 @@ module pipelineControl #(
     parameter INSTRUCTION_LENGTH = XLEN/2,
     parameter PREDECESSOR = 4,
     parameter SUCCESSOR = 4,
-    parameter OPCODE = 7)
+    parameter OPCODE = 7,
+    parameter ADDRESS_LENGTH = )
 (
     input clk,
     input rst,
@@ -69,8 +70,10 @@ int stall_counter;
 logic [SHIFT_DEPTH - 1:0] before_current_instruction;
 logic [SHIFT_DEPTH - 1:0] after_current_instruction;
 
-logic [SHIFT_DEPTH - 1:0] [OPCODE - 1:0] predecessor_opcodes;
-logic [SHIFT_DEPTH - 1:0] [OPCODE - 1:0] successor_opcodes;
+logic [SHIFT_DEPTH - 1:0] [INSTRUCTION_LENGTH - 1:0] predecessor_instructions;
+logic [SHIFT_DEPTH - 1:0] [INSTRUCTION_LENGTH - 1:0] successor_instructions;
+
+logic [SHIFT_DEPTH - 1:0] [XLEN - 1:0] previous_alu_data_out; // Impossible to get alu_data_out when instruction is in decode phase, only 1 cycle and 2 cycle old data available
 
 enum logic [1:0] {DECODE_RF_OPERAND, MEM_ACCESS_DM_OPERAND, EXECUTE_ALU_OPERAND, MEM_ACCESS_ALU_OPERAND} DATA_FWD_SOURCE;
 
@@ -382,22 +385,22 @@ always_ff @(posedge(clk)) begin : address_opcodes_shift_reg
 
         for (int i = 0; i < SHIFT_DEPTH - 2; i++) begin
 
-            predecessor_opcodes[i + 1] <= '0;
-            successor_opcodes[i + 1] <= '0;
+            predecessor_instructions[i + 1] <= '0;
+            successor_instructions[i + 1] <= '0;
 
         end
 
     end
     else begin
 
-        predecessor_opcodes[0] <= instruction[OPCODE - 1:0];
-        successor_opcodes[0] <= instruction[OPCODE - 1:0];
-        successor_opcodes[1] <= instruction_direct[OPCODE - 1:0];
-        successor_opcodes[2] <= next_instruction[OPCODE - 1:0];
+        predecessor_instructions[0] <= instruction;
+        successor_instructions[0] <= instruction;
+        successor_instructions[1] <= instruction_direct;
+        successor_instructions[2] <= next_instruction;
 
         for (int i = 0; i < SHIFT_DEPTH - 2; i++) begin
 
-            predecessor_opcodes[i + 1] <= predecessor_opcodes[i];
+            predecessor_instructions[i + 1] <= predecessor_instructions[i];
 
         end
 
@@ -405,18 +408,42 @@ always_ff @(posedge(clk)) begin : address_opcodes_shift_reg
 
 end : address_opcodes_shift_reg
 
+always_ff @(posedge(clk)) begin : alu_data_out_shift_reg
+
+    if (rst) begin
+
+        for (int i = 0; i < SHIFT_DEPTH - 2; i++) begin
+
+            previous_alu_data_out[i] <= '0;
+
+
+        end
+
+    end
+    else begin
+
+        previous_alu_data_out[1] <= alu_data_out;
+        previous_alu_data_out[2] <= previous_alu_data_out[1];
+
+    end
+
+end
+
 always_comb begin : fence_handling
 
     case (fence_succ) // How far before FENCE is the key instruction? (Input, Output, Read, or Write)
 
         (fence_succ[0] || fence_succ[2]): begin // Memory writes or outputs
 
-            for (logic [SHIFT_DEPTH - 1:0] i = '0; i < SHIFT_DEPTH; i++) begin
-
-                if (successor_opcodes[i] == 7'b0100011) begin
+            for (logic [SHIFT_DEPTH - 1:0] i = 1; i < SHIFT_DEPTH; i++) begin
+                                                                            // Change alu_data_out range when address space is not only used by memory
+                if ((successor_instructions[i][OPCODE - 1:0] == 7'b0100011) && (0 <= alu_data_out[i] <= (2^(XLEN - 1) - 1))) begin
 
                     before_current_instruction = i;
 
+                end
+                else begin
+                    // For when output addresses exist and address space is not only used by memory
                 end
 
             end
@@ -426,14 +453,18 @@ always_comb begin : fence_handling
         (fence_succ[1] || fence_succ[3]): begin // Memory reads or inputs
 
             for (logic [SHIFT_DEPTH - 1:0] i = '0; i < SHIFT_DEPTH; i++) begin
-
-                if (successor_opcodes == 7'b0000011) begin
+                                                                            // Change alu_data_out range when address space is not only used by memory
+                if ((successor_instructions[i][OPCODE - 1:0] == 7'b0000011) && (0 <= alu_data_out[i] <= (2^(XLEN - 1) - 1))) begin
 
                     before_current_instruction = i;
 
                 end
+                else begin
+                    // For when output addresses exist and address space is not only used by memory
+                end
+
             end
-            
+
         end
 
         default: begin
@@ -447,11 +478,14 @@ always_comb begin : fence_handling
         (fence_pred[0] || fence_pred[2]): begin // Check for memory writes or outputs
 
             for (logic [SHIFT_DEPTH - 1:0] i = '0; i < SHIFT_DEPTH; i++) begin
-
-                if (predecessor_opcodes == 7'b0100011) begin
+                                                                            // Change alu_data_out range when address space is not only used by memory
+                if ((predecessor_instructions[i][OPCODE - 1:0] == 7'b0100011) && (0 <= alu_data_out[i] <= (2^(XLEN - 1) - 1))) begin
 
                     after_current_instruction = i;
 
+                end
+                else begin
+                    // For when output addresses exist and address space is not only used by memory
                 end
 
             end
@@ -461,11 +495,14 @@ always_comb begin : fence_handling
         (fence_pred[1] || fence_pred[3]): begin // Check for memory reads or inputs
 
             for (logic [SHIFT_DEPTH - 1:0] i = '0; i < SHIFT_DEPTH; i++) begin
-
-                if (predecessor_opcodes == 7'b0000011) begin
+                                                                            // Change alu_data_out range when address space is not only used by memory
+                if ((predecessor_instructions[i][OPCODE - 1:0] == 7'b0000011) && (0 <= alu_data_out[i] <= (2^(XLEN - 1) - 1))) begin
 
                     after_current_instruction = i;
 
+                end
+                else begin
+                    // For when output addresses exist and address space is not only used by memory
                 end
 
             end
@@ -481,12 +518,10 @@ always_comb begin : fence_handling
     if (before_current_instruction + after_current_instruction == 2) begin // Successor instruction will not exit pipeline before predecessor enters decode
 
         stall_trigger = 1;
-        stall_counter = 1;
+        stall_counter = 2;
 
     end else if (before_current_instruction + after_current_instruction < 2) begin
-
         // Impossible; if the value is less than one then current instruction is not FENCE
-
     end
 
 end
