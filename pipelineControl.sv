@@ -5,8 +5,7 @@ module pipelineControl #(
     parameter INSTRUCTION_LENGTH = XLEN/2,
     parameter PREDECESSOR = 4,
     parameter SUCCESSOR = 4,
-    parameter OPCODE = 7,
-    parameter ADDRESS_LENGTH = )
+    parameter OPCODE = 7)
 (
     input clk,
     input rst,
@@ -518,7 +517,7 @@ always_comb begin : fence_handling
     if (before_current_instruction + after_current_instruction == 2) begin // Successor instruction will not exit pipeline before predecessor enters decode
 
         stall_trigger = 1;
-        stall_counter = 2;
+        stall_counter = 1;
 
     end else if (before_current_instruction + after_current_instruction < 2) begin
         // Impossible; if the value is less than one then current instruction is not FENCE
