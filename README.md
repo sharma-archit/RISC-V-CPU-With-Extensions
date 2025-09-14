@@ -1,7 +1,7 @@
 
 # 64-Bit RISC-V CPU
 
-This project is built upon my previous 32-bit RISC-V CPU project. The goal of this project is to implement all of the ratified RISC-V ISA extensions as of version 20240411:
+This project is built upon my previous 32-bit RISC-V CPU project. The goal of this project is to implement all of the ratified RISC-V ISA extensions as of version 20250508:
 
 - RV64I Base Integer Instruction Set  (**Implemented** ✅ | **Simulated** ✅)
 - Zifencei Extension for Instruction-Fetch Fence (**Implemented** ✅ | **Simulating** ⬅️)
@@ -15,17 +15,21 @@ This project is built upon my previous 32-bit RISC-V CPU project. The goal of th
 - A Extension for Atomic Instructions (WIP)
 - Zawrs Extension for Wait-on-Reservation-Set instructions (WIP)
 - Zacas Extension for Atomic Compare-and-Swap (CAS) Instructions (WIP)
+- Zabha Extension for Byte and Halfword Atomic Memory Operations (WIP)
 - Ztso Extension for Total Store Ordering (WIP)
 - CMO Extensions for Base Cache Management Operation ISA (WIP)
 - F Extension for Single-Precision Floating-Point (WIP)
 - D Extension for Double-Precision Floating-Point (WIP)
 - Q Extension for Quad-Precision Floating-Point (WIP)
 - Zfh and Zfhmin Extensions for Half-Precision Floating-Point (WIP)
+- BF16 Extensions for BFloat16-precision Floating Point (WIP)
 - Zfa Extension for Additional Floating-Point Instructions (WIP)
 - Zfinx, Zdinx, Zhinx, Zhinxmin Extensions for Floating-Point in Integer Registers (WIP)
+- C Extension for Compressed Instructions (WIP)
+- Zc* Extension for Code Size Reduction (WIP)
 - B Extension for Bit Manipulation (WIP)
 - V Standard Extension for Vector Operations (WIP)
 - Cryptography Extensions: Scalar & Entropy Source Instructions (WIP)
 - Cryptography Extensions: Vector Instructions (WIP)
 
-![RISCV CPU µArchitecture](https://github.com/user-attachments/assets/b3c89f48-68ac-4bdb-b4f1-760c3e54f83f)
+[RISCV CPU µArchitecture](RISCV CPU µArchitecture.png)
