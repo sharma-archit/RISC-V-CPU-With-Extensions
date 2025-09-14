@@ -32,4 +32,4 @@ This project is built upon my previous 32-bit RISC-V CPU project. The goal of th
 - Cryptography Extensions: Scalar & Entropy Source Instructions (WIP)
 - Cryptography Extensions: Vector Instructions (WIP)
 
-![RISCV CPU µArchitecture](https://raw.githubusercontent.com/sharma-archit/RISC-V-CPU-With-Extensions/refs/heads/master/RISCV%20CPU%20%C2%B5Architecture.png)
+![RISCV CPU µArchitecture](https://github.com/sharma-archit/RISC-V-CPU-With-Extensions/blob/master/RISCV%20CPU%20%C2%B5Architecture.png)
