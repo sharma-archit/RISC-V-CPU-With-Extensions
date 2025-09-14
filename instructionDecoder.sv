@@ -503,14 +503,13 @@ always_comb begin : decoder
 
         FENCE: begin
 
-            if (instruction[INSTRUCTION_LENGTH - 1 : INSTRUCTION_LENGTH - FENCE_FM] == 4'b1000) begin // TSO Fence
-
-            end
-            else begin // Normal Fence
+            if (instruction[INSTRUCTION_LENGTH - 1:INSTRUCTION_LENGTH - FENCE_FM] == 4'b0000) begin
 
                 fence_pred = instruction[INSTRUCTION_LENGTH - FENCE_FM - 1: INSTRUCTION_LENGTH - FENCE_FM - PREDECESSOR];
                 fence_succ = instruction[INSTRUCTION_LENGTH - FENCE_FM - PREDECESSOR - 1: INSTRUCTION_LENGTH - FENCE_FM - PREDECESSOR - SUCCESSOR];
-                // past_instructions = [1,2]
+
+            end
+            else begin // FENCE TSO
 
             end
 

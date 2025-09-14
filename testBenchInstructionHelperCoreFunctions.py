@@ -1,4 +1,5 @@
-def create_instruction(instruction_set, instr, rs2=None, rs1=None, rd=None, imm=None):
+def create_instruction(instruction_set, instr, rs2=None, rs1=None, rd=None, imm=None, fm=None, pred=None, succ=None):
+
     if instr not in instruction_set:
         raise ValueError(f"Instruction {instr} not supported")
 
@@ -6,67 +7,104 @@ def create_instruction(instruction_set, instr, rs2=None, rs1=None, rd=None, imm=
     funct3 = instruction_set[instr].get('funct3', '')
     funct7 = instruction_set[instr].get('funct7', '')
     special = instruction_set[instr].get('special', False)
+    pred_bin = '0000'
+    succ_bin = '0000'
 
     if opcode == '0110011':                     # R-type
         rs2_bin = get_binary_string(rs2, 5)
         rs1_bin = get_binary_string(rs1, 5)
         rd_bin = get_binary_string(rd, 5)
+
         instruction = funct7 + rs2_bin + rs1_bin + funct3 + rd_bin + opcode
 
-    elif opcode in ['0010011', '0000011']:                   # I-type
+    elif opcode in ['0010011', '0000011']:      # I-type
+
         if special:
+
             if instr == 'SRAI':
                 imm_bin = '010000' + get_binary_string(imm, 6)
             else:
                 imm_bin = '000000' + get_binary_string(imm, 6)
+
         else:
+
             imm_bin = get_binary_string(imm, 12)
-        rs1_bin = get_binary_string(rs1, 5)
-        rd_bin = get_binary_string(rd, 5)
-        instruction = imm_bin + rs1_bin + funct3 + rd_bin + opcode
+            rs1_bin = get_binary_string(rs1, 5)
+            rd_bin = get_binary_string(rd, 5)
+
+            instruction = imm_bin + rs1_bin + funct3 + rd_bin + opcode
 
     elif opcode == '0100011':                   # S-type
+
         imm_bin = get_binary_string(imm, 12)
         rs2_bin = get_binary_string(rs2, 5)
         rs1_bin = get_binary_string(rs1, 5)
+
         instruction = imm_bin[0:7] + rs2_bin + rs1_bin + funct3 + imm_bin[7:12] + opcode
 
     elif opcode == '1100011':                   # B-type
+
         imm_bin = get_binary_string(imm, 12)
         rs2_bin = get_binary_string(rs2, 5)
         rs1_bin = get_binary_string(rs1, 5)
+
         instruction = imm_bin[0] + imm_bin[2:8] + rs2_bin + rs1_bin + funct3 + imm_bin[8:12] + imm_bin[1] + opcode
 
     elif opcode in ['0110111', '0010111']:       # U-type
+
         imm_bin = get_binary_string(imm, 20)
         rd_bin = get_binary_string(rd, 5)
+
         instruction = imm_bin + rd_bin + opcode
 
     elif opcode == '1100111':                   # JALR
+
         imm_bin = get_binary_string(imm, 12)
         rs1_bin = get_binary_string(rs1, 5)
         rd_bin = get_binary_string(rd, 5)
+
         instruction = imm_bin + rs1_bin + funct3 + rd_bin + opcode
 
     elif opcode == '1101111':                   # J-type
+
         imm_bin = get_binary_string(imm, 20)
         rd_bin = get_binary_string(rd, 5)
+
         instruction = imm_bin[0] + imm_bin[10:20] + imm_bin[9] + imm_bin[1:9] + rd_bin + opcode
 
     elif opcode == '0001111':                   # FENCE
-        imm_bin = imm
-        # rs1_bin = get_binary_string(rs1, 5)
-        # rd_bin = get_binary_string(rd, 5)
+
+        fm_bin = fm
+
+        if instr == 'FENCE':
+
+            if pred == "MEMORY WRITE":
+                pred_bin = alter_string(pred_bin, 3)
+            elif pred == "MEMORY READ":
+                pred_bin = alter_string(pred_bin, 2)
+            elif pred == "OUTPUT":
+                pred_bin = alter_string(pred_bin, 1)
+            elif pred == "INPUT":
+                pred_bin = alter_string(pred_bin, 0)
+            if succ == "MEMORY WRITE":
+                succ_bin = alter_string(succ_bin, 3)
+            elif succ == "MEMORY READ":
+                succ_bin = alter_string(succ_bin, 2)
+            elif succ == "OUTPUT":
+                succ_bin = alter_string(succ_bin, 1)
+            elif succ == "INPUT":
+                succ_bin = alter_string(succ_bin, 0)
+        
+        else:
+            pred_bin = pred
+            succ_bin = succ
 
         rs1_bin = rs1
         rd_bin = rd
 
-        instruction = imm_bin + rs1_bin + funct3 + rd_bin + opcode
+        instruction = fm_bin + pred_bin + succ_bin + rs1_bin + funct3 + rd_bin + opcode
 
     elif opcode == '1110011':                   # ECB
-        # imm_bin = get_binary_string(imm, 12)
-        # rs1_bin = get_binary_string(rs1, 5)
-        # rd_bin = get_binary_string(rd, 5)
 
         imm_bin = imm
         rs1_bin = rs1
@@ -75,28 +113,36 @@ def create_instruction(instruction_set, instr, rs2=None, rs1=None, rd=None, imm=
         instruction = imm_bin + rs1_bin + funct3 + rd_bin + opcode
 
     elif opcode == '0011011':                   # I-type (64-bit)
+
         if special:
             if instr == 'SRAIW':
                 imm_bin = '010000' + get_binary_string(imm, 5)
             else:
                 imm_bin = '000000' + get_binary_string(imm, 5)
+
         else:
+
             imm_bin = get_binary_string(imm, 12)
-        rs1_bin = get_binary_string(rs1, 5)
-        rd_bin = get_binary_string(rd, 5)
-        instruction = imm_bin + rs1_bin + funct3 + rd_bin + opcode
+            rs1_bin = get_binary_string(rs1, 5)
+            rd_bin = get_binary_string(rd, 5)
+
+            instruction = imm_bin + rs1_bin + funct3 + rd_bin + opcode
 
     elif opcode == '0111011':                     # R-type (64-bit)
+
         rs2_bin = get_binary_string(rs2, 5)
         rs1_bin = get_binary_string(rs1, 5)
         rd_bin = get_binary_string(rd, 5)
+
         instruction = funct7 + rs2_bin + rs1_bin + funct3 + rd_bin + opcode
 
     return instruction
 
 def get_valid_input(prompt, min_value, max_value):
+
     while True:
         try:
+
             value = int(input(prompt))
             if min_value <= value <= max_value:
                 return value
@@ -107,6 +153,7 @@ def get_valid_input(prompt, min_value, max_value):
             print("Invalid input. Please enter an integer.")
 
 def get_binary_string(value, bits):
+
     if value < 0:
         value = (1 << bits) + value
 
@@ -115,6 +162,7 @@ def get_binary_string(value, bits):
     return format(value, f'0{bits}b')
 
 def complete_test(instruction_set, instructions, instructionname):
+
     total_regs = 32
     
     for idx, (name, details) in enumerate(instruction_set.items()):
@@ -132,12 +180,20 @@ def complete_test(instruction_set, instructions, instructionname):
 
         opcode = details['opcode']
 
-        if opcode == '0001111':  # FENCE and PAUSE
-            imm = details['fm'] + details['pred'] + details['succ']
+        if opcode == '0001111' & name == 'FENCE':
+
+            imm = details['fm'] + '0000' + '0000'
             rs1 = details['rs1']
             rd  = details['rd']
 
+        elif opcode == '0001111' & name != 'FENCE': # FENCE.TSO and PAUSE
+
+            imm = details['fm'] + details['pred'] + details['succ']
+            rs1 = details['rs1']
+            rd = details['rd']
+
         elif opcode == '1110011':  #ECALL/EBREAK/CSR
+
             imm = details['imm']
             rs1 = details['rs1']
             rd  = details['rd']
@@ -146,3 +202,18 @@ def complete_test(instruction_set, instructions, instructionname):
         instructions.append(binary_instruction)
 
     return instructions, instructionname
+
+def alter_string(bit_string, location, value=1, length=4):
+
+    if location - 1 < 0:
+
+        bit_string = str(value) + bit_string[location + 1:]
+        return bit_string
+    elif location + 1 > length:
+
+        bit_string = bit_string[:location] + str(value)
+        return bit_string
+    else:
+
+        bit_string = bit_string[:location] + str(value) + bit_string[location + 1:]
+        return bit_string

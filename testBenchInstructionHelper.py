@@ -140,8 +140,8 @@ instruction_set = {
 
     'FENCE':        {'funct3': '000', 'opcode': '0001111',
                     'fm': '0000',
-                    'pred': '0000',
-                    'succ': '0000',
+                    'pred': 'Which instruction must finish? (Memory Write/Read, Output/Input): ',
+                    'succ': 'Which instruction must wait? (Memory Write/Read, Output/Input): ',
                     'rs1': '00000',
                     'rd': '00000'},
     'FENCE.TSO':    {'funct3': '000', 'opcode': '0001111',
@@ -234,7 +234,7 @@ while True:
         continue
 
     instructionname.append(instr)
-    rs2 = rs1 = rd = imm = None
+    rs2 = rs1 = rd = imm = pred = succ = None
 
     if instruction_set[instr]['opcode'] in ['0010011', '0100011', '1100011', '0011011', '1100111', '0000011']:
         if instruction_set[instr].get('special', False):
@@ -254,21 +254,25 @@ while True:
         rd = get_valid_input("Enter the register location to store the output (0 to 31): ", 0, 31)
 
     if instruction_set[instr]['opcode'] == '0001111':
-        if instruction_set[instr] == 'FENCE': # Separate if statement for when it is properly implemented in the design
-            imm = instruction_set[instr]['fm'] + instruction_set[instr]['pred'] + instruction_set[instr]['succ'] # When implemented fm, pred, succ,
-            rs1 = instruction_set[instr]['rs1']                                                                  # rs1, and
-            rd = instruction_set[instr]['rd']                                                                    # rs2 will come from inputs
-        else:
-            imm = instruction_set[instr]['fm'] + instruction_set[instr]['pred'] + instruction_set[instr]['succ']
+        if instr == 'FENCE':
+            fm = instruction_set[instr]['fm']
+            pred = input(instruction_set[instr]['pred']).upper()
+            succ = input(instruction_set[instr]['succ']).upper()
+            rs1 = instruction_set[instr]['rs1']
+            rd = instruction_set[instr]['rd']
+        elif instr == 'FENCE.TSO': # FENCE.TSO
+            fm = instruction_set[instr]['fm']
+            pred = instruction_set[instr]['pred']
+            succ = instruction_set[instr]['succ']
             rs1 = instruction_set[instr]['rs1']
             rd = instruction_set[instr]['rd']
 
-    if instruction_set[instr]['opcode'] == '1110011':
+    if instruction_set[instr]['opcode'] == '1110011': # ECALL/EBREAK
         imm = instruction_set[instr]['imm']
         rs1 = instruction_set[instr]['rs1']
         rd = instruction_set[instr]['rd']
 
-    binary_instruction = create_instruction(instruction_set, instr, rs2, rs1, rd, imm)
+    binary_instruction = create_instruction(instruction_set, instr, rs2, rs1, rd, imm, fm, pred, succ)
     instructions.append(binary_instruction)
 
     update_grid_values(instr, rs1, rs2, rd, imm, grid, grid_labels, memory, PC)
