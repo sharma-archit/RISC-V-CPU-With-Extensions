@@ -432,11 +432,11 @@ always_comb begin : fence_handling
 
     case (fence_succ) // How far before FENCE is the key instruction? (Input, Output, Read, or Write)
 
-        (fence_succ[0] || fence_succ[2]): begin // Memory writes or outputs
+        (fence_succ[0] || fence_succ[2]): begin // Memory reads or inputs
 
             for (logic [SHIFT_DEPTH - 1:0] i = 1; i < SHIFT_DEPTH; i++) begin
                                                                             // Change alu_data_out range when address space is not only used by memory
-                if ((successor_instructions[i][OPCODE - 1:0] == 7'b0100011) && (0 <= alu_data_out[i] <= (2^(XLEN - 1) - 1))) begin
+                if ((successor_instructions[i][OPCODE - 1:0] == 7'b0000011) && ((0 <= alu_data_out[i]) || (alu_data_out[i] <= (2^(XLEN - 1) - 1)))) begin
 
                     before_current_instruction = i;
 
@@ -449,11 +449,11 @@ always_comb begin : fence_handling
 
         end
 
-        (fence_succ[1] || fence_succ[3]): begin // Memory reads or inputs
+        (fence_succ[1] || fence_succ[3]): begin // Memory writes or outputs
 
             for (logic [SHIFT_DEPTH - 1:0] i = '0; i < SHIFT_DEPTH; i++) begin
                                                                             // Change alu_data_out range when address space is not only used by memory
-                if ((successor_instructions[i][OPCODE - 1:0] == 7'b0000011) && (0 <= alu_data_out[i] <= (2^(XLEN - 1) - 1))) begin
+                if ((successor_instructions[i][OPCODE - 1:0] == 7'b0100011) && ((0 <= alu_data_out[i]) || (alu_data_out[i] <= (2^(XLEN - 1) - 1)))) begin
 
                     before_current_instruction = i;
 
@@ -474,11 +474,11 @@ always_comb begin : fence_handling
 
     case (fence_pred) // How far after FENCE is the key instruction? (Input, Output, Read, or Write)
 
-        (fence_pred[0] || fence_pred[2]): begin // Check for memory writes or outputs
+        (fence_pred[0] || fence_pred[2]): begin // Check for memory reads or inputs
 
             for (logic [SHIFT_DEPTH - 1:0] i = '0; i < SHIFT_DEPTH; i++) begin
                                                                             // Change alu_data_out range when address space is not only used by memory
-                if ((predecessor_instructions[i][OPCODE - 1:0] == 7'b0100011) && (0 <= alu_data_out[i] <= (2^(XLEN - 1) - 1))) begin
+                if ((predecessor_instructions[i][OPCODE - 1:0] == 7'b0000011) && ((0 <= alu_data_out[i]) || (alu_data_out[i] <= (2^(XLEN - 1) - 1)))) begin
 
                     after_current_instruction = i;
 
@@ -491,11 +491,11 @@ always_comb begin : fence_handling
 
         end
 
-        (fence_pred[1] || fence_pred[3]): begin // Check for memory reads or inputs
+        (fence_pred[1] || fence_pred[3]): begin // Check for memory writes or outputs
 
             for (logic [SHIFT_DEPTH - 1:0] i = '0; i < SHIFT_DEPTH; i++) begin
                                                                             // Change alu_data_out range when address space is not only used by memory
-                if ((predecessor_instructions[i][OPCODE - 1:0] == 7'b0000011) && (0 <= alu_data_out[i] <= (2^(XLEN - 1) - 1))) begin
+                if ((predecessor_instructions[i][OPCODE - 1:0] == 7'b0100011) && ((0 <= alu_data_out[i]) || (alu_data_out[i] <= (2^(XLEN - 1) - 1)))) begin
 
                     after_current_instruction = i;
 

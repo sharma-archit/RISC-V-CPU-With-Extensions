@@ -18,6 +18,27 @@ cpuCore cpu_core(.*);
     rst = 1;
     dbg_wr_en = 0;
     dbg_addr = 0;
+    dbg_instr = 32'b00000000000000000011000000100011;       //SD
+    #(2*CLK_PERIOD)
+    dbg_wr_en = 1;
+    #CLK_PERIOD
+    dbg_wr_en = 0;
+    #CLK_PERIOD
+    dbg_addr = 4;
+    dbg_instr = 32'b00000001001000000000000000001111;       //FENCE
+    #(2*CLK_PERIOD)
+    dbg_wr_en = 1;
+    #CLK_PERIOD
+    dbg_wr_en = 0;
+    #CLK_PERIOD
+    dbg_addr = 8;
+    dbg_instr = 32'b00000000000000000011000000000011;       //LD
+    #(2*CLK_PERIOD)
+    dbg_wr_en = 1;
+    #CLK_PERIOD
+    dbg_wr_en = 0;
+    #CLK_PERIOD
+    rst = 0;
 
     end
 

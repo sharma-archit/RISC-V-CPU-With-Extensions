@@ -234,7 +234,7 @@ while True:
         continue
 
     instructionname.append(instr)
-    rs2 = rs1 = rd = imm = pred = succ = None
+    rs2 = rs1 = rd = imm = fm = pred = succ = None
 
     if instruction_set[instr]['opcode'] in ['0010011', '0100011', '1100011', '0011011', '1100111', '0000011']:
         if instruction_set[instr].get('special', False):
