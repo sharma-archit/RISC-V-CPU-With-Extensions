@@ -277,7 +277,7 @@ while True:
 
     update_grid_values(instr, rs1, rs2, rd, imm, grid, grid_labels, memory, PC)
 
-    PC += 4
+    PC += 1
 
     memory_grid_column, grid_labels = update_grid(grid, grid_labels, memory, memory_grid_column, window)
 
@@ -297,7 +297,7 @@ if instructions:
             new_lines.append('    #(2*CLK_PERIOD)\n    dbg_wr_en = 1;\n    #CLK_PERIOD\n    dbg_wr_en = 0;\n    #CLK_PERIOD\n')
         elif 'end' in line and inside_initial_block: # Finds end statement in initial block and writes instructions before the end statement
             for instruction, name in zip(instructions[1:], instructionname[1:]):
-                dbg_addr += 4
+                dbg_addr += 1
                 new_lines.append(f'    dbg_addr = {dbg_addr};\n')
                 new_lines.append(f'    dbg_instr = 32\'b{instruction};       //{name}\n')
                 new_lines.append('    #(2*CLK_PERIOD)\n    dbg_wr_en = 1;\n    #CLK_PERIOD\n    dbg_wr_en = 0;\n    #CLK_PERIOD\n')

@@ -122,7 +122,7 @@ def update_grid_values(instr, rs1, rs2, rd, imm, grid, grid_labels, memory, PC):
     elif instr in ['SRA', 'SRAW']:
         grid[rd] = grid[rs1] >> (grid[rs2] & 0b11111)
     elif instr in ['JAL', 'JALR']:
-        grid[rd] = PC + 4
+        grid[rd] = PC + 1
     elif instr == 'LD':
         grid[rd] = get_memory_value(imm + grid[rs1], grid_labels)
     elif instr == 'LW':

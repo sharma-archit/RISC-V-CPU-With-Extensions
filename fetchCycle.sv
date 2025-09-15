@@ -27,7 +27,7 @@ always_ff @(posedge clk) begin
     else begin
 
         count_start <= '1;
-        PC_out <= count_start ? PC_in + 4 : PC_in;
+        PC_out <= count_start ? PC_in + 1 : PC_in;
         
     end
     

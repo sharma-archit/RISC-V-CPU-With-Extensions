@@ -9,7 +9,8 @@ module decodeCycle #(
     parameter REGISTER_SIZE = 5,
     parameter INSTRUCTION_LENGTH = XLEN/2,
     parameter PREDECESSOR = 4,
-    parameter SUCCESSOR = 4)
+    parameter SUCCESSOR = 4,
+    parameter OPCODE = 7)
 (   
     input clk, 
     input rst, 
@@ -82,8 +83,8 @@ logic [REGISTER_SIZE - 1:0] rf_read_addr2;
 logic dec_dm_read_enable;
 logic dec_dm_write_enable;
 
-logic [PREDECESSOR - 1:0] fence_pred;
-logic [SUCCESSOR - 1:0] fence_succ;
+logic [PREDECESSOR - 1:0] fence_pred = '0;
+logic [SUCCESSOR - 1:0] fence_succ = 0;
 
 regFile register_file (
     .write_enable(rf_writeback_enable),
@@ -123,8 +124,26 @@ pipelineControl pipeline_control (
     .dec_jbl_address_in(dec_jbl_address_in),
     .dec_dm_write_data(dm_write_data),
     .*);
-    
-// use PC value computed by JBL block if the current instruction is a jump/branch instruction, otherwise increment PC normally 
-assign PC_out = (instruction[6:0] == 7'b1100011 || instruction[6:0] == 7'b1100111 || instruction[6:0] == 7'b1101111) ? jbl_address_out : PC_in;
+
+
+always_ff @(posedge(clk) ) begin
+
+    if (rst) begin
+
+        PC_out <= '0;
+
+    end
+    else if (instruction[OPCODE - 1:0] == 7'b1100011 || instruction[OPCODE - 1:0] == 7'b1100111 || instruction[OPCODE - 1:0] == 7'b1101111) begin
+
+        PC_out <= jbl_address_out;
+
+    end
+    else begin
+
+        PC_out <= PC_in;
+
+    end
+
+end
 
 endmodule

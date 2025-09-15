@@ -20,7 +20,8 @@ module instructionDecoder #(
     parameter INSTRUCTION_LENGTH = XLEN/2,
     parameter FENCE_FM = 4,
     parameter PREDECESSOR = 4,
-    parameter SUCCESSOR = 4)
+    parameter SUCCESSOR = 4,
+    parameter OPCODE = 7)
 (
     input logic [INSTRUCTION_LENGTH - 1:0] instruction,
     input logic [XLEN - 1:0] PC_in,
@@ -125,7 +126,7 @@ always_comb begin : decoder
     source_reg2 = 0;
 
     // Decode each instruction opcode
-    case (instruction[6:0])
+    case (instruction[OPCODE - 1:0])
     
         LUI: begin
 

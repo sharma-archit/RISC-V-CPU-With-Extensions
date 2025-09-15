@@ -4,6 +4,7 @@ module memoryAccessCycle #(
     parameter HALFWORD = 16,
     parameter WORD = 32)
 (
+    input clk,
     input  dm_read_enable,
     input  dm_write_enable,
     input [XLEN - 1:0] alu_data_out,
@@ -19,6 +20,7 @@ logic [XLEN-1:0] dm_read_addr, dm_write_addr;
 logic [XLEN-1:0] read_data;
 
 dataMemory data_memory (
+    .clk(clk),
     .read_enable(dm_read_enable),
     .write_enable(dm_write_enable),
     .read_addr(dm_read_addr),

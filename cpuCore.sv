@@ -247,6 +247,7 @@ end : execute_to_memaccess_ff
 /////////////// Memory Access Cycle ///////////////
 
 memoryAccessCycle memory_access_cycle (
+    .clk(clk),
     .dm_read_enable(dm_read_enable_d[MEMORY_ACCESS]),
     .dm_write_enable(dm_write_enable_d[MEMORY_ACCESS]),
     .alu_data_out(alu_data_out_d[MEMORY_ACCESS]),
