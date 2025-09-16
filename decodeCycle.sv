@@ -16,8 +16,8 @@ module decodeCycle #(
     input rst, 
     
     input logic [INSTRUCTION_LENGTH - 1:0] instruction,
-    input logic [INSTRUCTION_LENGTH - 1:0] instruction_direct,
     input logic [INSTRUCTION_LENGTH - 1:0] next_instruction,
+    input logic [INSTRUCTION_LENGTH - 1:0] next_next_instruction,
     input logic [XLEN - 1:0] PC_in,
     output logic [XLEN - 1:0] PC_out,
 
@@ -126,21 +126,21 @@ pipelineControl pipeline_control (
     .*);
 
 
-always_ff @(posedge(clk) ) begin
+always_comb begin
 
     if (rst) begin
 
-        PC_out <= '0;
+        PC_out = '0;
 
     end
     else if (instruction[OPCODE - 1:0] == 7'b1100011 || instruction[OPCODE - 1:0] == 7'b1100111 || instruction[OPCODE - 1:0] == 7'b1101111) begin
 
-        PC_out <= jbl_address_out;
+        PC_out = jbl_address_out;
 
     end
     else begin
 
-        PC_out <= PC_in;
+        PC_out = PC_in;
 
     end
 

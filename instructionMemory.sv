@@ -6,7 +6,8 @@ module instructionMemory #(
     input clk,
     input [SIMULATION_MEMORY_SIZE - 2:0] addr,
     output logic [INSTRUCTION_LENGTH - 1:0] instruction,
-    output logic [INSTRUCTION_LENGTH - 1:0] next_instruction, // Instruction purely for FENCE handling
+    output logic [INSTRUCTION_LENGTH - 1:0] next_instruction, // Instructions purely
+    output logic [INSTRUCTION_LENGTH - 1:0] next_next_instruction, // for FENCE handling
 
     // Debug ports to write into instruction memory during testing
     input dbg_wr_en,
@@ -20,6 +21,7 @@ always_comb begin : read
 
     instruction = instruction_memory[addr];
     next_instruction = instruction_memory[addr + 1];
+    next_next_instruction = instruction_memory[addr + 2];
 
 end : read
 

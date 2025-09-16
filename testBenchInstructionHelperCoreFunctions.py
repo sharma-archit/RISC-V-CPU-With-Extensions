@@ -50,7 +50,7 @@ def create_instruction(instruction_set, instr, rs2=None, rs1=None, rd=None, imm=
 
         instruction = imm_bin[0] + imm_bin[2:8] + rs2_bin + rs1_bin + funct3 + imm_bin[8:12] + imm_bin[1] + opcode
 
-    elif opcode in ['0110111', '0010111']:       # U-type
+    elif opcode in ['0110111', '0010111']:      # U-type
 
         imm_bin = get_binary_string(imm, 20)
         rd_bin = get_binary_string(rd, 5)
@@ -128,7 +128,7 @@ def create_instruction(instruction_set, instr, rs2=None, rs1=None, rd=None, imm=
 
             instruction = imm_bin + rs1_bin + funct3 + rd_bin + opcode
 
-    elif opcode == '0111011':                     # R-type (64-bit)
+    elif opcode == '0111011':                   # R-type (64-bit)
 
         rs2_bin = get_binary_string(rs2, 5)
         rs1_bin = get_binary_string(rs1, 5)

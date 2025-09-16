@@ -24,8 +24,9 @@ enum logic [1:0] {DECODE_RF_OPERAND, MEM_ACCESS_DM_OPERAND, EXECUTE_ALU_OPERAND,
 
 // Combinational signals
 logic [INSTRUCTION_LENGTH - 1:0] instruction;
-logic [DECODE:0] [XLEN - 1:0] PC;
 logic [INSTRUCTION_LENGTH - 1:0] next_instruction;
+logic [INSTRUCTION_LENGTH - 1:0] next_next_instruction;
+logic [DECODE:0] [XLEN - 1:0] PC;
 
 logic alu_enable;
 logic [ALU_SEL_SIZE - 1:0] alu_sel;
@@ -51,6 +52,8 @@ logic [XLEN - 1:0] dm_data_bypass;
 
 // Pipelined signals
 logic [DECODE:0] [INSTRUCTION_LENGTH - 1:0] instruction_d;
+logic [DECODE:0] [INSTRUCTION_LENGTH - 1:0] next_instruction_d;
+logic [DECODE:0] [INSTRUCTION_LENGTH - 1:0] next_next_instruction_d;
 logic [WRITEBACK:0] [XLEN - 1:0] PC_d;
 
 logic [EXECUTE:0] alu_enable_d;
@@ -96,6 +99,8 @@ fetchCycle fetch_cycle (
     .PC_in(PC[DECODE]),
     .PC_out(PC[FETCH]),
     .instruction(instruction),
+    .next_instruction(next_instruction),
+    .next_next_instruction(next_next_instruction),
     .dbg_wr_en(dbg_wr_en),
     .dbg_addr(dbg_addr),
     .dbg_instr(dbg_instr)
@@ -108,6 +113,8 @@ always_ff @(posedge(clk)) begin : fetch_to_decode_ff
 
         PC_d[DECODE] <= '0;
         instruction_d[DECODE] <= '0;
+        next_instruction_d[DECODE] <= '0;
+        next_next_instruction_d[DECODE] <= '0;
 
     end
 
@@ -115,6 +122,9 @@ always_ff @(posedge(clk)) begin : fetch_to_decode_ff
 
         PC_d[DECODE] <= PC[FETCH];
         instruction_d[DECODE] <= instruction;
+        next_instruction_d[DECODE] <= next_instruction;
+        next_next_instruction_d[DECODE] <= next_next_instruction;
+
 
     end
 
@@ -126,7 +136,8 @@ decodeCycle decode_cycle (
     .clk(clk),
     .rst(rst),
     .instruction(instruction_d[DECODE]),
-    .instruction_direct(instruction),
+    .next_instruction(next_instruction_d[DECODE]),
+    .next_next_instruction(next_next_instruction_d[DECODE]),
     .PC_in(PC_d[DECODE]),
     .PC_out(PC[DECODE]),
 

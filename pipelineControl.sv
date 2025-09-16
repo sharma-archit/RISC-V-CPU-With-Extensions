@@ -10,8 +10,8 @@ module pipelineControl #(
     input clk,
     input rst,
     input [INSTRUCTION_LENGTH - 1:0] instruction,
-    input [INSTRUCTION_LENGTH - 1:0] instruction_direct,
     input [INSTRUCTION_LENGTH - 1:0] next_instruction,
+    input [INSTRUCTION_LENGTH - 1:0] next_next_instruction,
     input [REGISTER_SIZE - 1:0] destination_reg,
     input [REGISTER_SIZE - 1:0] source_reg1,
     input [REGISTER_SIZE - 1:0] source_reg2,
@@ -399,10 +399,9 @@ always_ff @(posedge(clk)) begin : address_opcodes_shift_reg
             predecessor_instructions[i + 1] <= predecessor_instructions[i];
 
         end
-
         successor_instructions[0] <= instruction;
-        successor_instructions[1] <= instruction_direct;
-        successor_instructions[2] <= next_instruction;
+        successor_instructions[1] <= next_instruction;
+        successor_instructions[2] <= next_next_instruction;
 
     end
 
@@ -433,7 +432,7 @@ always_comb begin : fence_handling
 
      // How far before FENCE is the key instruction? (Input, Output, Read, or Write)
 
-    if (fence_succ[0] || fence_succ[2]) begin // Memory reads or inputs
+    if (fence_succ[3] || fence_succ[1]) begin // Memory reads or inputs
 
         for (int i = 0; i < SHIFT_DEPTH; i++) begin
                                                                         // Change alu_data_out range when address space is not only used by memory
@@ -449,8 +448,7 @@ always_comb begin : fence_handling
         end
 
     end
-
-    if (fence_succ[1] || fence_succ[3]) begin // Memory writes or outputs
+    else if (fence_succ[2] || fence_succ[0]) begin // Memory writes or outputs
 
         for (int i = 0; i < SHIFT_DEPTH; i++) begin
                                                                         // Change alu_data_out range when address space is not only used by memory
@@ -469,7 +467,7 @@ always_comb begin : fence_handling
 
  // How far after FENCE is the key instruction? (Input, Output, Read, or Write)
 
-    if (fence_pred[0] || fence_pred[2]) begin // Check for memory reads or inputs
+    if (fence_pred[3] || fence_pred[1]) begin // Check for memory reads or inputs
 
         for (int i = 0; i < SHIFT_DEPTH; i++) begin
                                                                         // Change alu_data_out range when address space is not only used by memory
@@ -485,8 +483,7 @@ always_comb begin : fence_handling
         end
 
     end
-
-    if (fence_pred[1] || fence_pred[3]) begin // Check for memory writes or outputs
+    else if (fence_pred[2] || fence_pred[0]) begin // Check for memory writes or outputs
 
         for (int i = 0; i < SHIFT_DEPTH; i++) begin
                                                                         // Change alu_data_out range when address space is not only used by memory
@@ -503,7 +500,7 @@ always_comb begin : fence_handling
 
     end
 
-    if (before_current_instruction + after_current_instruction == 2) begin // Successor instruction will not exit pipeline before predecessor enters decode
+    if (before_current_instruction == 1 && after_current_instruction == 1) begin // Successor instruction will not exit pipeline before predecessor enters decode
 
         stall_trigger = 1;
         stall_counter = 1;
