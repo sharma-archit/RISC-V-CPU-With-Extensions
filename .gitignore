@@ -3,3 +3,4 @@ config.ini
 .venv
 .vscode
 .hdl_checker
+cpuCore_tb.sv
